@@ -12,7 +12,8 @@ GetJobCV is currently Work-In-Progress. Do not expect the program to be function
 - [x] Preprocess extracted text (lowercasing, stripping symbols and punctuation, tokenizing, and droping stopwords from NTLK)
 - [x] Extract GitHub and LinkedIn socials
 - [ ] Feature extraction and label encoding
-    - [ ] Named Entity Recognition
+    - [x] Named Entity Recognition
+        - [ ] Pull O\*NET skills instead of hardcoding skills.txt / bundle O\*skills
     - [ ] Count
     - [ ] TF-IDF
     - [ ] Semantic

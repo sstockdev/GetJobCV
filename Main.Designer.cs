@@ -54,9 +54,9 @@
             // 
             // DebugTextBox
             // 
-            DebugTextBox.Location = new Point(606, 302);
+            DebugTextBox.Location = new Point(242, 12);
             DebugTextBox.Name = "DebugTextBox";
-            DebugTextBox.Size = new Size(100, 96);
+            DebugTextBox.Size = new Size(292, 144);
             DebugTextBox.TabIndex = 2;
             DebugTextBox.Text = "";
             // 

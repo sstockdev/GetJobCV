@@ -1,0 +1,507 @@
+# Skills gazetteer — one skill per line, '#' starts a comment.
+# Matching is case-insensitive (Spotter.IgnoreCase = true).
+# Seed list (~500). For fuller coverage swap in Lightcast Open Skills,
+# ESCO, or O*NET taxonomies.
+
+# --- Programming languages ---
+c#
+c++
+python
+java
+javascript
+typescript
+go
+golang
+rust
+ruby
+php
+swift
+kotlin
+scala
+perl
+matlab
+objective-c
+dart
+elixir
+erlang
+haskell
+clojure
+f#
+groovy
+lua
+julia
+cobol
+fortran
+assembly
+vba
+bash
+powershell
+shell scripting
+sql
+pl/sql
+t-sql
+solidity
+visual basic
+delphi
+scheme
+prolog
+ocaml
+lisp
+abap
+sas
+apex
+
+# --- Web frontend ---
+html
+html5
+css
+css3
+sass
+scss
+less
+tailwind css
+bootstrap
+react
+react.js
+redux
+next.js
+vue
+vue.js
+nuxt.js
+angular
+angularjs
+svelte
+ember.js
+jquery
+backbone.js
+webpack
+vite
+babel
+gulp
+grunt
+web components
+pwa
+responsive design
+material ui
+chakra ui
+storybook
+three.js
+d3.js
+alpine.js
+remix
+gatsby
+web accessibility
+
+# --- Backend and frameworks ---
+node.js
+express
+express.js
+nest.js
+django
+flask
+fastapi
+spring
+spring boot
+.net
+asp.net
+asp.net core
+entity framework
+ruby on rails
+laravel
+symfony
+codeigniter
+phoenix
+gin
+fiber
+ktor
+micronaut
+quarkus
+hibernate
+grpc
+graphql
+rest api
+soap
+websockets
+rabbitmq
+apache kafka
+celery
+tornado
+sinatra
+
+# --- Mobile ---
+android
+ios
+react native
+flutter
+xamarin
+swiftui
+jetpack compose
+cordova
+ionic
+kotlin multiplatform
+uikit
+core data
+mobile development
+android studio
+
+# --- Databases ---
+mysql
+postgresql
+sqlite
+mariadb
+microsoft sql server
+oracle database
+mongodb
+cassandra
+redis
+dynamodb
+couchbase
+neo4j
+elasticsearch
+influxdb
+cockroachdb
+firestore
+memcached
+hbase
+snowflake
+bigquery
+redshift
+clickhouse
+database design
+database administration
+data modeling
+etl
+nosql
+orm
+query optimization
+supabase
+
+# --- Cloud ---
+aws
+amazon web services
+azure
+microsoft azure
+google cloud platform
+gcp
+ec2
+s3
+aws lambda
+cloudfront
+rds
+eks
+ecs
+fargate
+cloudformation
+azure functions
+azure devops
+app engine
+cloud run
+digitalocean
+heroku
+netlify
+vercel
+linode
+cloudflare
+openstack
+ibm cloud
+oracle cloud
+serverless
+cloud architecture
+
+# --- DevOps and infrastructure ---
+docker
+kubernetes
+helm
+terraform
+ansible
+puppet
+chef
+vagrant
+jenkins
+gitlab ci
+github actions
+circleci
+travis ci
+teamcity
+argo cd
+spinnaker
+prometheus
+grafana
+datadog
+new relic
+splunk
+elk stack
+logstash
+kibana
+nagios
+consul
+vault
+istio
+nginx
+apache
+haproxy
+ci/cd
+infrastructure as code
+containerization
+orchestration
+site reliability engineering
+observability
+gitops
+
+# --- Data, ML, and AI ---
+machine learning
+deep learning
+neural networks
+natural language processing
+nlp
+computer vision
+reinforcement learning
+tensorflow
+pytorch
+keras
+scikit-learn
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+plotly
+jupyter
+apache spark
+hadoop
+kafka
+airflow
+dbt
+tableau
+power bi
+looker
+data analysis
+data science
+data engineering
+data visualization
+feature engineering
+model deployment
+mlops
+hugging face
+transformers
+opencv
+xgboost
+lightgbm
+statistics
+regression
+classification
+clustering
+time series analysis
+big data
+data mining
+predictive modeling
+a/b testing
+generative ai
+llm
+large language models
+prompt engineering
+recommender systems
+
+# --- Security ---
+cybersecurity
+penetration testing
+ethical hacking
+vulnerability assessment
+network security
+application security
+cryptography
+encryption
+owasp
+siem
+firewalls
+incident response
+threat modeling
+security auditing
+malware analysis
+reverse engineering
+digital forensics
+identity and access management
+oauth
+saml
+jwt
+zero trust
+kali linux
+metasploit
+burp suite
+nmap
+wireshark
+security compliance
+soc 2
+gdpr
+
+# --- Operating systems ---
+linux
+unix
+windows
+windows server
+macos
+ubuntu
+debian
+centos
+red hat
+fedora
+alpine linux
+system administration
+kernel development
+virtualization
+vmware
+
+# --- Networking ---
+tcp/ip
+dns
+http
+https
+vpn
+routing
+switching
+bgp
+ospf
+sdn
+network administration
+cisco
+load balancing
+cdn
+api gateway
+
+# --- Tools and version control ---
+git
+github
+gitlab
+bitbucket
+svn
+mercurial
+jira
+confluence
+trello
+asana
+slack
+notion
+vs code
+visual studio
+intellij idea
+eclipse
+vim
+postman
+figma
+sketch
+
+# --- Testing ---
+unit testing
+integration testing
+end-to-end testing
+test automation
+selenium
+cypress
+playwright
+jest
+mocha
+chai
+junit
+testng
+pytest
+nunit
+xunit
+cucumber
+appium
+jmeter
+load testing
+tdd
+bdd
+
+# --- Methodologies and practices ---
+agile
+scrum
+kanban
+waterfall
+lean
+devops
+sdlc
+design patterns
+microservices
+event-driven architecture
+domain-driven design
+object-oriented programming
+functional programming
+clean code
+solid principles
+refactoring
+code review
+pair programming
+continuous integration
+continuous deployment
+
+# --- Design and UX ---
+ui design
+ux design
+user research
+wireframing
+prototyping
+adobe xd
+adobe photoshop
+adobe illustrator
+indesign
+interaction design
+visual design
+design systems
+usability testing
+information architecture
+
+# --- Business and soft skills ---
+project management
+product management
+team leadership
+communication
+problem solving
+critical thinking
+time management
+stakeholder management
+agile coaching
+mentoring
+public speaking
+technical writing
+documentation
+requirements gathering
+business analysis
+budgeting
+negotiation
+presentation
+collaboration
+adaptability
+conflict resolution
+decision making
+strategic planning
+customer service
+sales
+marketing
+seo
+content marketing
+digital marketing
+google analytics
+
+# --- Emerging and misc tech ---
+blockchain
+ethereum
+smart contracts
+web3
+cryptocurrency
+iot
+embedded systems
+arduino
+raspberry pi
+robotics
+augmented reality
+virtual reality
+unity
+unreal engine
+game development
+computer graphics
+opengl
+cuda
+quantum computing
+edge computing
+distributed systems
