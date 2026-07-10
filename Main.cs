@@ -1,4 +1,7 @@
+using GetJobATS.Modules;
 using UglyToad.PdfPig;
+using UglyToad.PdfPig.Actions;
+using UglyToad.PdfPig.Annotations;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
@@ -25,21 +28,37 @@ namespace GetJobATS
                 string? filePath = openFileDialog.FileName;
                 using PdfDocument document = PdfDocument.Open(filePath);
                 string allText = "";
+                List<string> hyperlinks = [];
+
                 foreach (Page page in document.GetPages())
                 {
-                    string text = ContentOrderTextExtractor.GetText(page);
-                    allText += text;
+                    allText += ContentOrderTextExtractor.GetText(page);
+
+                    foreach (Annotation ann in page.GetAnnotations())
+                    {
+                        if (ann.Action is UriAction uri && !string.IsNullOrWhiteSpace(uri.Uri))
+                            hyperlinks.Add(uri.Uri);
+                    }
                 }
 
                 if (!String.IsNullOrWhiteSpace(allText))
                 {
-                    StatusLabel.Text = "Processing Text";
-
+                    StatusLabel.Text = "Extracting Socials";
+                    Socials socials = SocialExtractor.Extract(allText, hyperlinks);
+                    StatusLabel.Text = "Preprocessing Extracted Text";
+                    string preprocessed = PreProcessor.PreprocessToString(allText);
+                    StatusLabel.Text = "Ready";
+                    DebugTextBox.Text =
+        $"GitHub: {socials.GitHub}\r\nLinkedIn: {socials.LinkedIn}\r\n\r\n{preprocessed}";
+                }
+                else
+                {
+                    StatusLabel.Text = "Error: Extracted text was null or invalid";
                 }
             }
             else
             {
-                StatusLabel.Text = "Couldn't open PDF!";
+                StatusLabel.Text = "Error: Couldn't open PDF!";
             }
         }
     }

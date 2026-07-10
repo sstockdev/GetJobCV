@@ -30,6 +30,7 @@
         {
             SelectButton = new Button();
             StatusLabel = new Label();
+            DebugTextBox = new RichTextBox();
             SuspendLayout();
             // 
             // SelectButton
@@ -51,11 +52,20 @@
             StatusLabel.TabIndex = 1;
             StatusLabel.Text = "Ready";
             // 
+            // DebugTextBox
+            // 
+            DebugTextBox.Location = new Point(606, 302);
+            DebugTextBox.Name = "DebugTextBox";
+            DebugTextBox.Size = new Size(100, 96);
+            DebugTextBox.TabIndex = 2;
+            DebugTextBox.Text = "";
+            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(DebugTextBox);
             Controls.Add(StatusLabel);
             Controls.Add(SelectButton);
             Name = "Main";
@@ -68,5 +78,6 @@
 
         private Button SelectButton;
         private Label StatusLabel;
+        private RichTextBox DebugTextBox;
     }
 }

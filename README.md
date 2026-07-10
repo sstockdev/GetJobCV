@@ -10,6 +10,7 @@ GetJobCV is currently Work-In-Progress. Do not expect the program to be function
 
 - [x] Extract text from PDF
 - [x] Preprocess extracted text (lowercasing, stripping symbols and punctuation, tokenizing, and droping stopwords from NTLK)
+- [x] Extract GitHub and LinkedIn socials
 - [ ] Feature extraction and label encoding (named entity recognition, count, TF-IDF, semantic, and doc2vec)
 
 ## References
