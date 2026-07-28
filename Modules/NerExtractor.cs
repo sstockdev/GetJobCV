@@ -73,6 +73,11 @@ namespace GetJobATS.Modules
                 }
             }
 
+            // remove skills from people / orgs / locations
+            people.ExceptWith(skills);
+            orgs.ExceptWith(skills);
+            locations.ExceptWith(skills);
+
             return new NerResult([.. people], [.. orgs], [.. locations], [.. skills]);
         }
 

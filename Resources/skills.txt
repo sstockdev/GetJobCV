@@ -1,54 +1,35 @@
-# Skills gazetteer — one skill per line, '#' starts a comment.
+# Curated overlay for the O*NET gazetteer. One skill per line, '#' starts a comment.
 # Matching is case-insensitive (Spotter.IgnoreCase = true).
-# Seed list (~500). For fuller coverage swap in Lightcast Open Skills,
-# ESCO, or O*NET taxonomies.
+# These are the short forms, abbreviations, and tech names that the bundled O*NET
+# base (Resources/onet_skills.tsv) does NOT contain. Merged with it in
+# SkillsGazetteer.Load(). Optional "alias<TAB>canonical" lines are also supported.
 
 # --- Programming languages ---
-c#
-c++
-python
 java
-javascript
-typescript
 go
 golang
 rust
-ruby
-php
-swift
-kotlin
-scala
-perl
 matlab
 objective-c
 dart
 elixir
 erlang
-haskell
 clojure
 f#
 groovy
-lua
-julia
 cobol
-fortran
 assembly
 vba
-bash
 powershell
 shell scripting
 sql
 pl/sql
 t-sql
-solidity
 visual basic
 delphi
-scheme
-prolog
 ocaml
 lisp
 abap
-sas
 apex
 
 # --- Web frontend ---
@@ -60,21 +41,15 @@ sass
 scss
 less
 tailwind css
-bootstrap
-react
 react.js
 redux
 next.js
 vue
-vue.js
 nuxt.js
 angular
 angularjs
 svelte
 ember.js
-jquery
-backbone.js
-webpack
 vite
 babel
 gulp
@@ -93,20 +68,15 @@ gatsby
 web accessibility
 
 # --- Backend and frameworks ---
-node.js
 express
 express.js
 nest.js
-django
-flask
 fastapi
 spring
-spring boot
 .net
 asp.net
 asp.net core
 entity framework
-ruby on rails
 laravel
 symfony
 codeigniter
@@ -118,12 +88,9 @@ micronaut
 quarkus
 hibernate
 grpc
-graphql
 rest api
 soap
 websockets
-rabbitmq
-apache kafka
 celery
 tornado
 sinatra
@@ -131,7 +98,6 @@ sinatra
 # --- Mobile ---
 android
 ios
-react native
 flutter
 xamarin
 swiftui
@@ -145,33 +111,20 @@ mobile development
 android studio
 
 # --- Databases ---
-mysql
-postgresql
-sqlite
-mariadb
-microsoft sql server
-oracle database
-mongodb
 cassandra
-redis
 dynamodb
 couchbase
-neo4j
-elasticsearch
 influxdb
 cockroachdb
 firestore
 memcached
 hbase
-snowflake
-bigquery
 redshift
 clickhouse
 database design
 database administration
 data modeling
 etl
-nosql
 orm
 query optimization
 supabase
@@ -202,20 +155,14 @@ netlify
 vercel
 linode
 cloudflare
-openstack
-ibm cloud
 oracle cloud
 serverless
 cloud architecture
 
 # --- DevOps and infrastructure ---
-docker
-kubernetes
 helm
 terraform
 ansible
-puppet
-chef
 vagrant
 jenkins
 gitlab ci
@@ -225,7 +172,6 @@ travis ci
 teamcity
 argo cd
 spinnaker
-prometheus
 grafana
 datadog
 new relic
@@ -233,7 +179,6 @@ splunk
 elk stack
 logstash
 kibana
-nagios
 consul
 vault
 istio
@@ -256,23 +201,14 @@ natural language processing
 nlp
 computer vision
 reinforcement learning
-tensorflow
-pytorch
-keras
-scikit-learn
-pandas
-numpy
-scipy
 matplotlib
 seaborn
 plotly
 jupyter
-apache spark
 hadoop
 kafka
 airflow
 dbt
-tableau
 power bi
 looker
 data analysis
@@ -282,10 +218,8 @@ data visualization
 feature engineering
 model deployment
 mlops
-hugging face
 transformers
 opencv
-xgboost
 lightgbm
 statistics
 regression
@@ -325,22 +259,15 @@ oauth
 saml
 jwt
 zero trust
-kali linux
-metasploit
 burp suite
-nmap
-wireshark
 security compliance
 soc 2
 gdpr
 
 # --- Operating systems ---
-linux
-unix
 windows
 windows server
 macos
-ubuntu
 debian
 centos
 red hat
@@ -349,7 +276,6 @@ alpine linux
 system administration
 kernel development
 virtualization
-vmware
 
 # --- Networking ---
 tcp/ip
@@ -369,25 +295,18 @@ cdn
 api gateway
 
 # --- Tools and version control ---
-git
-github
-gitlab
 bitbucket
 svn
 mercurial
 jira
 confluence
 trello
-asana
-slack
 notion
 vs code
 visual studio
 intellij idea
 eclipse
 vim
-postman
-figma
 sketch
 
 # --- Testing ---
@@ -395,19 +314,13 @@ unit testing
 integration testing
 end-to-end testing
 test automation
-selenium
 cypress
 playwright
-jest
 mocha
 chai
-junit
-testng
 pytest
-nunit
 xunit
 cucumber
-appium
 jmeter
 load testing
 tdd
@@ -441,9 +354,6 @@ ux design
 user research
 wireframing
 prototyping
-adobe xd
-adobe photoshop
-adobe illustrator
 indesign
 interaction design
 visual design
@@ -457,8 +367,6 @@ product management
 team leadership
 communication
 problem solving
-critical thinking
-time management
 stakeholder management
 agile coaching
 mentoring
@@ -468,7 +376,6 @@ documentation
 requirements gathering
 business analysis
 budgeting
-negotiation
 presentation
 collaboration
 adaptability
@@ -481,7 +388,6 @@ marketing
 seo
 content marketing
 digital marketing
-google analytics
 
 # --- Emerging and misc tech ---
 blockchain
@@ -500,8 +406,16 @@ unity
 unreal engine
 game development
 computer graphics
-opengl
 cuda
 quantum computing
 edge computing
 distributed systems
+
+# --- Additions (O*NET gaps found in testing) ---
+blazor
+snyk
+proxmox
+netbox
+rocky linux
+nuget
+parallel programming

@@ -20,9 +20,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Resources\skills.txt">
+    <None Update="Resources\onet_skills.tsv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+	<None Update="Resources\skills.txt">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
   </ItemGroup>
 
+  <ItemGroup>
+	  <Compile Remove="tools/**/*.cs" />
+  </ItemGroup>
 </Project>
