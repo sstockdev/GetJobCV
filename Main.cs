@@ -38,6 +38,12 @@ namespace GetJobCV
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
+                if (String.IsNullOrWhiteSpace(JobDescriptionTextBox.Text))
+                {
+                    StatusLabel.Text = "Error: Job description was empty";
+                    return;
+                }
+
                 StatusLabel.Text = "Extracting Text";
                 string? filePath = openFileDialog.FileName;
                 using PdfDocument document = PdfDocument.Open(filePath);
@@ -65,19 +71,34 @@ namespace GetJobCV
                     StatusLabel.Text = "Running Named Entity Recognition";
                     NerResult ner = _ner?.Extract(allText) ?? NerResult.Empty;
 
-                    // Run preprocessing on extracted text
-                    StatusLabel.Text = "Preprocessing Extracted Text";
-                    string preprocessed = PreProcessor.PreprocessToString(allText);
+                    // Run preprocessing on text
+                    StatusLabel.Text = "Preprocessing Text";
+                    string[] resumeTokens = PreProcessor.Preprocess(allText);
+                    string[] jdTokens = PreProcessor.Preprocess(JobDescriptionTextBox.Text);
+                    string preprocessed = string.Join(' ', resumeTokens);
+
+                    // Vectorize over one shared vocabulary
+                    StatusLabel.Text = "Vectorizing";
+                    var (vectorizer, vectors) = CountVectorizer.FitTransform([resumeTokens, jdTokens]);
+                    int[] resumeVec = vectors[0];
+                    int[] jdVec = vectors[1];
 
                     // Done
                     StatusLabel.Text = "Ready";
+
+                    int shared = 0;
+                    for (int i = 0; i < vectorizer.VocabularySize; i++)
+                        if (resumeVec[i] > 0 && jdVec[i] > 0) shared++;
+
                     DebugTextBox.Text =
                        $"GitHub: {socials.GitHub}\r\nLinkedIn: {socials.LinkedIn}\r\n\r\n" +
                        $"People: {string.Join(", ", ner.People)}\r\n" +
                        $"Orgs: {string.Join(", ", ner.Organizations)}\r\n" +
                        $"Locations: {string.Join(", ", ner.Locations)}\r\n" +
                        $"Skills: {string.Join(", ", ner.Skills)}\r\n\r\n" +
-                       $"{preprocessed}";
+                       $"{preprocessed}\r\n\r\n" +
+                       $"Vocab: {vectorizer.VocabularySize} terms | " +
+                       $"Resume / JD Shared Overlap (good!): {shared}";
                 }
                 else
                 {
