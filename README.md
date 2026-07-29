@@ -14,7 +14,7 @@ GetJobCV is currently Work-In-Progress. Do not expect the program to be function
 - [ ] Feature extraction and label encoding
     - [x] Named Entity Recognition
         - [x] Pull O\*NET skills instead of hardcoding skills.txt / bundle O\*skills
-    - [ ] Count
+    - [x] Count
     - [ ] TF-IDF
     - [ ] Semantic
     - [ ] Doc2vec
