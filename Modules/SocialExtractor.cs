@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace GetJobATS.Modules
+namespace GetJobCV.Modules
 {
     public record Socials(string? GitHub, string? LinkedIn);
     

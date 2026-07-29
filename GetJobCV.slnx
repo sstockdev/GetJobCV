@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="GetJobATS.csproj" />
+  <Project Path="GetJobCV.csproj" />
   <Project Path="tools/OnetGazetteer/OnetGazetteer.csproj" />
 </Solution>

@@ -1,4 +1,4 @@
-namespace GetJobATS
+namespace GetJobCV
 {
     internal static class Program
     {

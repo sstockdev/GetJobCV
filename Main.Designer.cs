@@ -1,4 +1,4 @@
-﻿namespace GetJobATS
+﻿namespace GetJobCV
 {
     partial class Main
     {
@@ -69,7 +69,7 @@
             Controls.Add(StatusLabel);
             Controls.Add(SelectButton);
             Name = "Main";
-            Text = "GetJobATS - Main";
+            Text = "GetJobCV - Main";
             ResumeLayout(false);
             PerformLayout();
         }

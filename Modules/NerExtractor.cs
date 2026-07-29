@@ -3,7 +3,7 @@ using Catalyst.Models;
 using Mosaik.Core;
 using Version = Mosaik.Core.Version;
 
-namespace GetJobATS.Modules
+namespace GetJobCV.Modules
 {
     /// <summary>
     /// Named Entity Recognition over raw text.

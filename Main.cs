@@ -1,12 +1,12 @@
-using GetJobATS.Modules;
+using GetJobCV.Modules;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Actions;
 using UglyToad.PdfPig.Annotations;
 using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
-using static GetJobATS.Modules.NerExtractor;
+using static GetJobCV.Modules.NerExtractor;
 
-namespace GetJobATS
+namespace GetJobCV
 {
     public partial class Main : Form
     {

@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 
 
-namespace GetJobATS.Modules
+namespace GetJobCV.Modules
 {
     /// <summary>
     /// Pre-processing module to clean out all the unnecessary things, such as symbols, punctuation marks,

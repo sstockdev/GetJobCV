@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace GetJobATS.Modules
+namespace GetJobCV.Modules
 {
     /// <summary>
     /// Loads skill phrases for the NER gazetteer from the bundled O*NET file
