@@ -78,17 +78,18 @@ namespace GetJobCV
                     string preprocessed = string.Join(' ', resumeTokens);
 
                     // Vectorize over one shared vocabulary
-                    StatusLabel.Text = "Vectorizing";
-                    var (vectorizer, vectors) = CountVectorizer.FitTransform([resumeTokens, jdTokens]);
-                    int[] resumeVec = vectors[0];
-                    int[] jdVec = vectors[1];
+                    StatusLabel.Text = "Scoring";
+                    var (tfidf, vectors) = TfidfVectorizer.FitTransform([resumeTokens, jdTokens]);
+                    double[] resumeVec = vectors[0];
+                    double[] jdVec = vectors[1];
+
+                    double score = Similarity.Cosine(resumeVec, jdVec);
+                    double matchPct = score * 100.0;
 
                     // Done
                     StatusLabel.Text = "Ready";
 
-                    int shared = 0;
-                    for (int i = 0; i < vectorizer.VocabularySize; i++)
-                        if (resumeVec[i] > 0 && jdVec[i] > 0) shared++;
+                    ResultLabel.Text = $"Match: {matchPct:F1}%";
 
                     DebugTextBox.Text =
                        $"GitHub: {socials.GitHub}\r\nLinkedIn: {socials.LinkedIn}\r\n\r\n" +
@@ -97,8 +98,8 @@ namespace GetJobCV
                        $"Locations: {string.Join(", ", ner.Locations)}\r\n" +
                        $"Skills: {string.Join(", ", ner.Skills)}\r\n\r\n" +
                        $"{preprocessed}\r\n\r\n" +
-                       $"Vocab: {vectorizer.VocabularySize} terms | " +
-                       $"Resume / JD Shared Overlap (good!): {shared}";
+                       $"Vocab: {tfidf.VocabularySize} terms | " +
+                       $"TF-IDF cosine match: {matchPct:F1}%";
                 }
                 else
                 {

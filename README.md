@@ -15,9 +15,16 @@ GetJobCV is currently Work-In-Progress. Do not expect the program to be function
     - [x] Named Entity Recognition
         - [x] Pull O\*NET skills instead of hardcoding skills.txt / bundle O\*skills
     - [x] Count
-    - [ ] TF-IDF
+    - [x] TF-IDF
     - [ ] Semantic
     - [ ] Doc2vec
+    - [ ] Combine scoring!
+- [ ] Refactor code
+    - [ ] Add error handling
+    - [ ] Add Stemming / Lemmatization
+- [ ] Redo UI
+    - [ ] Add the ability to run multiple resumes against a job
+- [ ] Add exporting the report
 
 ## References
 
