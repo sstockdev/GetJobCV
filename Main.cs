@@ -12,6 +12,10 @@ namespace GetJobCV
     {
         // Build on load; happens once
         private NerExtractor? _ner;
+
+        // O*NET skill name to demand tier conversion
+        private IReadOnlyDictionary<string, int> _skillTiers = new Dictionary<string, int>();
+
         public Main()
         {
             InitializeComponent();
@@ -24,6 +28,7 @@ namespace GetJobCV
         private async void Main_Load(object? sender, EventArgs e)
         {
             StatusLabel.Text = "Loading NER model";
+            _skillTiers = SkillsGazetteer.LoadWeights();
             _ner = await NerExtractor.CreateAsync(SkillsGazetteer.Load());
             StatusLabel.Text = "Ready";
         }
@@ -70,36 +75,42 @@ namespace GetJobCV
                     // Run NER on text
                     StatusLabel.Text = "Running Named Entity Recognition";
                     NerResult ner = _ner?.Extract(allText) ?? NerResult.Empty;
+                    NerResult jdNer = _ner?.Extract(JobDescriptionTextBox.Text) ?? NerResult.Empty;
 
                     // Run preprocessing on text
                     StatusLabel.Text = "Preprocessing Text";
                     string[] resumeTokens = PreProcessor.Preprocess(allText);
                     string[] jdTokens = PreProcessor.Preprocess(JobDescriptionTextBox.Text);
-                    string preprocessed = string.Join(' ', resumeTokens);
 
                     // Vectorize over one shared vocabulary
                     StatusLabel.Text = "Scoring";
-                    var (tfidf, vectors) = TfidfVectorizer.FitTransform([resumeTokens, jdTokens]);
+                    var (_, vectors) = TfidfVectorizer.FitTransform([resumeTokens, jdTokens]);
                     double[] resumeVec = vectors[0];
                     double[] jdVec = vectors[1];
 
                     double score = Similarity.Cosine(resumeVec, jdVec);
                     double matchPct = score * 100.0;
 
+                    SkillMatcher.SkillReport skillReport =
+                        SkillMatcher.Match(ner.Skills, jdNer.Skills, _skillTiers);
+
+                    double coveragePct = skillReport.WeightCoverage * 100.0;
+
                     // Done
                     StatusLabel.Text = "Ready";
 
-                    ResultLabel.Text = $"Match: {matchPct:F1}%";
+                    ResultLabel.Text = $"Match: {matchPct:F1}% | Skill Coverage: {coveragePct:F0}%";
 
                     DebugTextBox.Text =
                        $"GitHub: {socials.GitHub}\r\nLinkedIn: {socials.LinkedIn}\r\n\r\n" +
                        $"People: {string.Join(", ", ner.People)}\r\n" +
                        $"Orgs: {string.Join(", ", ner.Organizations)}\r\n" +
-                       $"Locations: {string.Join(", ", ner.Locations)}\r\n" +
-                       $"Skills: {string.Join(", ", ner.Skills)}\r\n\r\n" +
-                       $"{preprocessed}\r\n\r\n" +
-                       $"Vocab: {tfidf.VocabularySize} terms | " +
-                       $"TF-IDF cosine match: {matchPct:F1}%";
+                       $"Locations: {string.Join(", ", ner.Locations)}\r\n\r\n" +
+                       $"TF-IDF cosine match: {matchPct:F1}%\r\n" +
+                       $"Weighted skill coverage: {coveragePct:F0}%\r\n\r\n" +
+                       $"Matched ({skillReport.Matched.Count}): {FormatSkills(skillReport.Matched)}\r\n\r\n" +
+                       $"MISSING ({skillReport.Missing.Count}): {FormatSkills(skillReport.Missing)}\r\n\r\n" +
+                       $"Extra ({skillReport.Extra.Count}): {FormatSkills(skillReport.Extra)}";
                 }
                 else
                 {
@@ -110,6 +121,17 @@ namespace GetJobCV
             {
                 StatusLabel.Text = "Error: Couldn't open PDF!";
             }
+        }
+
+        private static string FormatSkills(IReadOnlyList<SkillMatcher.ScoredSkill> skills)
+        {
+            if (skills.Count == 0) return "(none)";
+            return string.Join(", ", skills.Select(s => s.Tier switch
+            {
+                2 => $"{s.Name} (hot)",
+                1 => $"{s.Name} (in demand)",
+                _ => s.Name
+            }));
         }
     }
 }

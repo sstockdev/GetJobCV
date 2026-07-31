@@ -30,6 +30,18 @@ namespace GetJobCV.Modules
         }
 
         /// <summary>
+        /// Converts O*NET skill to demand tier
+        /// </summary>
+        public static IReadOnlyDictionary<string, int> LoadWeights(string path = DefaultPath)
+        {
+            Dictionary<string, int> tiers = new(StringComparer.OrdinalIgnoreCase);
+            foreach (SkillEntry e in LoadCategorized(path))
+                if (!tiers.TryGetValue(e.Name, out int existing) || e.Weight > existing)
+                    tiers[e.Name] = e.Weight;
+            return tiers;
+        }
+
+        /// <summary>
         /// O*Net base entries with their categories and weights
         /// </summary>
         public static IReadOnlyList<SkillEntry> LoadCategorized(string path = DefaultPath)
