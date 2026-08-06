@@ -96,10 +96,14 @@ namespace GetJobCV
 
                     double coveragePct = skillReport.WeightCoverage * 100.0;
 
+                    ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(score, skillReport.WeightCoverage);
+
+                    double overallPct = combined.Overall * 100.0;
+
                     // Done
                     StatusLabel.Text = "Ready";
 
-                    ResultLabel.Text = $"Match: {matchPct:F1}% | Skill Coverage: {coveragePct:F0}%";
+                    ResultLabel.Text = $"Overall: {overallPct:F0}% - {combined.Verdict}";
 
                     DebugTextBox.Text =
                        $"GitHub: {socials.GitHub}\r\nLinkedIn: {socials.LinkedIn}\r\n\r\n" +
@@ -110,7 +114,8 @@ namespace GetJobCV
                        $"Weighted skill coverage: {coveragePct:F0}%\r\n\r\n" +
                        $"Matched ({skillReport.Matched.Count}): {FormatSkills(skillReport.Matched)}\r\n\r\n" +
                        $"MISSING ({skillReport.Missing.Count}): {FormatSkills(skillReport.Missing)}\r\n\r\n" +
-                       $"Extra ({skillReport.Extra.Count}): {FormatSkills(skillReport.Extra)}";
+                       $"Extra ({skillReport.Extra.Count}): {FormatSkills(skillReport.Extra)}\r\n\r\n" + 
+                       $"Overall match: {overallPct:F0}% ({combined.Verdict})\r\n\r\n";
                 }
                 else
                 {

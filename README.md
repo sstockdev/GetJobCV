@@ -18,7 +18,7 @@ GetJobCV is currently Work-In-Progress. Do not expect the program to be function
     - [x] TF-IDF
     - [ ] Semantic
     - [ ] Doc2vec
-    - [ ] Combine scoring!
+    - [x] Combine scoring!
 - [ ] Refactor code
     - [ ] Add error handling
     - [ ] Add Stemming / Lemmatization
