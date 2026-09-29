@@ -46,6 +46,8 @@ namespace GetJobCV
                 _start.ResumePath = null;
                 _start.JobDescription = "";
                 ShowView(_start);
+                // Don't carry an error from the last run over to a fresh start
+                _header.Status.Show(Pill.Kind.Ready, "Ready");
             };
 
             // A PDF dropped anywhere on the inputs becomes the resume
@@ -96,6 +98,11 @@ namespace GetJobCV
                 _header.Status.Show(Pill.Kind.Error, "Add a resume first");
                 return;
             }
+            if (!File.Exists(filePath))
+            {
+                _header.Status.Show(Pill.Kind.Error, $"Can't find {Path.GetFileName(filePath)}. It may have been moved or deleted");
+                return;
+            }
             if (string.IsNullOrWhiteSpace(jobDescription))
             {
                 _header.Status.Show(Pill.Kind.Error, "The job description is empty");
@@ -123,7 +130,7 @@ namespace GetJobCV
 
                 if (result is null)
                 {
-                    Fail("No text could be extracted from the PDF");
+                    Fail($"No text found in {Path.GetFileName(filePath)}. Scanned resumes aren't supported yet");
                     return;
                 }
 
@@ -134,7 +141,7 @@ namespace GetJobCV
             }
             catch (Exception ex)
             {
-                Fail($"Couldn't read the PDF ({ex.Message})");
+                Fail($"Couldn't read {Path.GetFileName(filePath)} ({ex.Message})");
             }
         }
 
