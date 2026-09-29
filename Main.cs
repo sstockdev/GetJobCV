@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using GetJobCV.Modules;
 using GetJobCV.UI;
 using Microsoft.Web.WebView2.Core;
@@ -18,6 +18,9 @@ namespace GetJobCV
 
         // O*NET skill name to demand tier conversion
         private IReadOnlyDictionary<string, int> _skillTiers = new Dictionary<string, int>();
+
+        // Skill to the more general skills it implies (PostgreSQL to SQL)
+        private IReadOnlyDictionary<string, IReadOnlySet<string>> _skillParents = new Dictionary<string, IReadOnlySet<string>>();
 
         private readonly AppHeader _header = new();
         private readonly StartView _start = new();
@@ -130,6 +133,7 @@ namespace GetJobCV
             try
             {
                 _skillTiers = SkillsGazetteer.LoadWeights();
+                _skillParents = SkillsGazetteer.LoadParents();
                 _ner = await NerExtractor.CreateAsync(
                     SkillsGazetteer.Load(), SkillsGazetteer.LoadCaseSensitive(), SkillsGazetteer.LoadAliases());
                 _header.Status.Show(Pill.Kind.Ready, "Ready · models loaded");
@@ -192,7 +196,7 @@ namespace GetJobCV
             try
             {
                 Task<AnalysisResult?> run = Task.Run(() =>
-                    Analyze(filePath, jobDescription, ner, _skillTiers, status, cancel.Token), cancel.Token);
+                    Analyze(filePath, jobDescription, ner, _skillTiers, _skillParents, status, cancel.Token), cancel.Token);
                 _running = run;
                 AnalysisResult? result = await run;
 
@@ -261,6 +265,7 @@ namespace GetJobCV
             string jobDescription,
             NerExtractor ner,
             IReadOnlyDictionary<string, int> skillTiers,
+            IReadOnlyDictionary<string, IReadOnlySet<string>> skillParents,
             IProgress<string> status,
             CancellationToken cancel)
         {
@@ -361,7 +366,8 @@ namespace GetJobCV
             IReadOnlyList<IReadOnlySet<string>> alternatives = AlternativeGroups.Find(jobDescription, ner);
 
             SkillMatcher.SkillReport skillReport = SkillMatcher.Match(
-                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths, overallYears, preferred, alternatives);
+                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths, overallYears, preferred, alternatives,
+                skillParents);
 
             return new AnalysisResult(
                 socials, sections, record, experience, requirements, resumeNer, score, skillReport);

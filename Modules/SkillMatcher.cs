@@ -67,9 +67,11 @@ namespace GetJobCV.Modules
         /// <param name="Preferred">The job description only lists it as nice to have</param>
         /// <param name="Group">Which group of alternatives it's in ("one of the following"), if any</param>
         /// <param name="GroupSize">How many job skills are in that group; 0 when not in one</param>
+        /// <param name="ImpliedBy">The more specific resume skill that covers this one
+        /// ("PostgreSQL" for "SQL"), when the resume doesn't show it as strongly by name</param>
         public sealed record ScoredSkill(
             string Name, int Tier, SectionType? Section = null, int? RequiredMonths = null, int ShownMonths = 0,
-            bool Preferred = false, int? Group = null, int GroupSize = 0)
+            bool Preferred = false, int? Group = null, int GroupSize = 0, string? ImpliedBy = null)
         {
             /// <summary>
             /// Demand weight: <c>Tier + 1</c>
@@ -135,6 +137,9 @@ namespace GetJobCV.Modules
         /// <see cref="AlternativeGroups"/>). A group counts as one requirement: its weight is
         /// its heaviest member's, its credit the best matched member's. Once one member
         /// matches, the others aren't missing.</param>
+        /// <param name="parents">Skill to the more general skills it implies (from
+        /// <see cref="SkillsGazetteer.LoadParents"/>). A resume skill covers a job skill it
+        /// implies at its own evidence and months, and then isn't counted as extra.</param>
         public static SkillReport Match(
             IEnumerable<(string Skill, SectionType Section)> resumeMentions,
             IEnumerable<string> jobSkills,
@@ -143,9 +148,11 @@ namespace GetJobCV.Modules
             IReadOnlyDictionary<string, int>? shownMonths = null,
             YearsCheck? overallYears = null,
             IReadOnlySet<string>? preferred = null,
-            IReadOnlyList<IReadOnlySet<string>>? alternatives = null)
+            IReadOnlyList<IReadOnlySet<string>>? alternatives = null,
+            IReadOnlyDictionary<string, IReadOnlySet<string>>? parents = null)
         {
             Dictionary<string, SectionType> resume = BestSections(resumeMentions);
+            var (implied, impliedMonths) = Implied(resume, parents, shownMonths);
             HashSet<string> job = Distinct(jobSkills);
             HashSet<string> niceToHave = new(preferred ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
 
@@ -162,18 +169,32 @@ namespace GetJobCV.Modules
             foreach (string lone in groupOf.Where(p => groupSize[p.Value] < 2).Select(p => p.Key).ToList())
                 groupOf.Remove(lone);
 
-            ScoredSkill Score(string name, SectionType? section, bool isJobSkill)
+            ScoredSkill Score(string name, SectionType? section, bool isJobSkill, string? impliedBy = null)
             {
                 int? group = isJobSkill && groupOf.TryGetValue(name, out int g) ? g : null;
+                int months = shownMonths?.GetValueOrDefault(name) ?? 0;
+                if (isJobSkill)
+                    months = Math.Max(months, impliedMonths.GetValueOrDefault(name));
                 return new(
                     name,
                     tiers.GetValueOrDefault(name),
                     section,
                     requiredYears?.TryGetValue(name, out int years) == true ? years * 12 : null,
-                    shownMonths?.GetValueOrDefault(name) ?? 0,
+                    months,
                     isJobSkill && niceToHave.Contains(name),
                     group,
-                    group is { } id ? groupSize[id] : 0);
+                    group is { } id ? groupSize[id] : 0,
+                    impliedBy);
+            }
+
+            // A job skill as the resume shows it: by name, or through a more specific
+            // skill when that's stronger evidence. Null when the resume has neither.
+            ScoredSkill? Found(string name)
+            {
+                bool named = resume.TryGetValue(name, out SectionType section);
+                if (implied.TryGetValue(name, out var via) && (!named || EvidenceFor(via.Section) > EvidenceFor(section)))
+                    return Score(name, via.Section, true, via.Skill);
+                return named ? Score(name, section, true) : null;
             }
 
             List<ScoredSkill> matched = [];
@@ -183,25 +204,23 @@ namespace GetJobCV.Modules
 
             foreach (string name in job.Where(n => !groupOf.ContainsKey(n)))
             {
-                if (resume.TryGetValue(name, out SectionType section))
+                if (Found(name) is { } skill)
                 {
-                    ScoredSkill skill = Score(name, section, true);
                     matched.Add(skill);
                     coveredWeight += skill.CoverageWeight * skill.Evidence * skill.YearsFactor;
                     totalWeight += skill.CoverageWeight;
                 }
                 else
                 {
-                    ScoredSkill skill = Score(name, null, true);
-                    missing.Add(skill);
-                    totalWeight += skill.CoverageWeight;
+                    ScoredSkill absent = Score(name, null, true);
+                    missing.Add(absent);
+                    totalWeight += absent.CoverageWeight;
                 }
             }
 
             foreach (IGrouping<int, string> group in groupOf.GroupBy(pair => pair.Value, pair => pair.Key))
             {
-                List<ScoredSkill> members = [.. group.Select(name =>
-                    Score(name, resume.TryGetValue(name, out SectionType s) ? s : null, true))];
+                List<ScoredSkill> members = [.. group.Select(name => Found(name) ?? Score(name, null, true))];
                 List<ScoredSkill> have = [.. members.Where(m => m.Section is not null)];
 
                 totalWeight += members.Max(m => m.CoverageWeight);
@@ -221,7 +240,9 @@ namespace GetJobCV.Modules
                 totalWeight += OverallYearsWeight;
             }
 
-            List<ScoredSkill> extra = [.. resume.Where(pair => !job.Contains(pair.Key))
+            // A skill that covered a job skill through the hierarchy isn't extra
+            HashSet<string> used = new(matched.Select(s => s.ImpliedBy).OfType<string>(), StringComparer.OrdinalIgnoreCase);
+            List<ScoredSkill> extra = [.. resume.Where(pair => !job.Contains(pair.Key) && !used.Contains(pair.Key))
                 .Select(pair => Score(pair.Key, pair.Value, false))];
 
             double coverage = totalWeight > 0 ? coveredWeight / totalWeight : 0.0;
@@ -261,6 +282,34 @@ namespace GetJobCV.Modules
                     best[trimmed] = section;
             }
             return best;
+        }
+
+        /// <summary>
+        /// The general skills the resume's specific ones imply: each with the strongest
+        /// section and the skill that shows it there, and the most months any of them shows.
+        /// </summary>
+        private static (Dictionary<string, (SectionType Section, string Skill)> Via, Dictionary<string, int> Months) Implied(
+            Dictionary<string, SectionType> resume,
+            IReadOnlyDictionary<string, IReadOnlySet<string>>? parents,
+            IReadOnlyDictionary<string, int>? shownMonths)
+        {
+            Dictionary<string, (SectionType Section, string Skill)> via = new(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, int> months = new(StringComparer.OrdinalIgnoreCase);
+            if (parents is null) return (via, months);
+
+            // Alphabetical, so a tie in evidence always names the same skill
+            foreach (var (skill, section) in resume.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!parents.TryGetValue(skill, out IReadOnlySet<string>? generals)) continue;
+                int shown = shownMonths?.GetValueOrDefault(skill) ?? 0;
+                foreach (string general in generals)
+                {
+                    if (!via.TryGetValue(general, out var best) || EvidenceFor(section) > EvidenceFor(best.Section))
+                        via[general] = (section, skill);
+                    months[general] = Math.Max(months.GetValueOrDefault(general), shown);
+                }
+            }
+            return (via, months);
         }
 
         /// <summary>

@@ -610,3 +610,95 @@ oop	Object-Oriented Programming
 object oriented programming	Object-Oriented Programming
 Salesforce software	Salesforce
 Salesforce.com Salesforce CRM	Salesforce
+
+# --- Hierarchy: Specific > General ---
+# A resume that shows the specific skill also covers the general one when the job asks
+# for it ("PostgreSQL" covers "SQL"), at the same evidence. Not the other way around.
+# Names are as reported (canonical, aliases resolved). Chains follow: Next.js > React >
+# JavaScript means Next.js covers JavaScript too.
+
+# Languages and frameworks
+TypeScript > JavaScript
+React > JavaScript
+Vue.js > JavaScript
+Angular > JavaScript
+jQuery > JavaScript
+Node.js > JavaScript
+Next.js > React
+Nuxt.js > Vue.js
+Express > Node.js
+NestJS > Node.js
+Spring > Java
+Spring Boot > Spring
+ASP.NET > .NET
+Django > Python
+Flask > Python
+FastAPI > Python
+pandas > Python
+NumPy > Python
+Ruby on Rails > Ruby
+Laravel > PHP
+Sass > CSS
+SCSS > CSS
+Tailwind CSS > CSS
+Bash > Shell Scripting
+
+# Databases
+PostgreSQL > SQL
+MySQL > SQL
+Microsoft SQL Server > SQL
+Oracle Database > SQL
+SQLite > SQL
+T-SQL > SQL
+PL/SQL > SQL
+MongoDB > NoSQL
+Cassandra > NoSQL
+DynamoDB > NoSQL
+Redis > NoSQL
+
+# Source control
+Git > version control
+Git > source control
+SVN > version control
+SVN > source control
+GitHub > Git
+GitLab > Git
+Bitbucket > Git
+
+# Cloud and DevOps
+EC2 > AWS
+S3 > AWS
+ECS > AWS
+EKS > AWS
+AWS Lambda > AWS
+CloudFormation > AWS
+SageMaker > AWS
+Docker > containerization
+Kubernetes > containerization
+Jenkins > CI/CD
+GitHub Actions > CI/CD
+GitLab CI > CI/CD
+Terraform > infrastructure as code
+CloudFormation > infrastructure as code
+Ansible > infrastructure as code
+Ubuntu > Linux
+Red Hat Enterprise Linux > Linux
+
+# Data and ML
+Deep Learning > Machine Learning
+TensorFlow > Deep Learning
+PyTorch > Deep Learning
+Keras > Deep Learning
+Scikit-learn > Machine Learning
+Spark > big data
+Hadoop > big data
+Tableau > data visualization
+Power BI > data visualization
+
+# Testing and process
+Jest > unit testing
+JUnit > unit testing
+pytest > unit testing
+Selenium > test automation
+Scrum > Agile
+Kanban > Agile

@@ -1,4 +1,4 @@
-using GetJobCV.Modules;
+﻿using GetJobCV.Modules;
 
 namespace GetJobCV.UI
 {
@@ -54,7 +54,8 @@ namespace GetJobCV.UI
             skill.Tier switch { 2 => "Hot skill", 1 => "In-demand skill", _ => "Skill" };
 
         /// <summary>
-        /// Where the resume shows the skill and what that's worth.
+        /// Where the resume shows the skill and what that's worth, and the more specific
+        /// skill that showed it ("shown in use in Experience, through PostgreSQL").
         /// </summary>
         public static string Evidence(SkillMatcher.ScoredSkill skill) => skill.Section switch
         {
@@ -62,7 +63,7 @@ namespace GetJobCV.UI
             SectionType.Skills => "only in the Skills list, counts half",
             SectionType s when skill.Evidence < SkillMatcher.UsedEvidence => $"mentioned in {s}, counts {skill.Evidence:P0}",
             SectionType s => $"shown in use in {s}",
-        };
+        } + (skill.ImpliedBy is { } via ? $", through {DisplayName(via)}" : "");
 
         /// <summary>
         /// "job asks for 3+ years, resume shows 1.7", or null without a years requirement.
@@ -94,8 +95,9 @@ namespace GetJobCV.UI
             string.Join(" · ", new[] { Demand(skill), Evidence(skill), Years(skill), NiceToHave(skill), Alternative(skill) }.OfType<string>());
 
         /// <summary>
-        /// The short tag on a chip: where it was found when that counts for less, and a
-        /// years shortfall ("skills list · 1.7 of 3+ yrs"). Null when there's nothing to flag.
+        /// The short tag on a chip: the specific skill that covered it, where it was found
+        /// when that counts for less, and a years shortfall ("via PostgreSQL, skills list ·
+        /// 1.7 of 3+ yrs"). Null when there's nothing to flag.
         /// </summary>
         public static string? Tag(SkillMatcher.ScoredSkill skill)
         {
@@ -114,6 +116,8 @@ namespace GetJobCV.UI
                 SectionType s when skill.Evidence < SkillMatcher.UsedEvidence => s.ToString().ToLowerInvariant(),
                 _ => null,
             };
+            if (skill.ImpliedBy is { } via)
+                where = where is null ? $"via {DisplayName(via)}" : $"via {DisplayName(via)}, {where}";
             return where is null ? years : years is null ? where : $"{where} · {years}";
         }
 

@@ -70,7 +70,7 @@ namespace GetJobCV.Modules
         {
             Dictionary<string, string> aliases = new(StringComparer.OrdinalIgnoreCase);
             if (!File.Exists(overlayPath)) return aliases;
-            foreach (string line in ReadDataLines(overlayPath))
+            foreach (string line in ReadDataLines(overlayPath).Where(l => !IsHierarchyLine(l)))
             {
                 int tab = line.IndexOf('\t');
                 if (tab < 0) continue;
@@ -80,6 +80,45 @@ namespace GetJobCV.Modules
                     aliases[alias] = canonical;
             }
             return aliases;
+        }
+
+        /// <summary>
+        /// Separates the two sides of an overlay "Specific &gt; General" hierarchy line.
+        /// </summary>
+        public const char HierarchySeparator = '>';
+
+        private static bool IsHierarchyLine(string line) => line.Contains(HierarchySeparator);
+
+        /// <summary>
+        /// Overlay "Specific &gt; General" lines: each skill to every more general skill it
+        /// implies, chains followed ("Next.js &gt; React" and "React &gt; JavaScript" give
+        /// Next.js both). Case-insensitive keys; a skill never implies itself.
+        /// </summary>
+        public static IReadOnlyDictionary<string, IReadOnlySet<string>> LoadParents(string overlayPath = OverlayPath)
+        {
+            Dictionary<string, HashSet<string>> direct = new(StringComparer.OrdinalIgnoreCase);
+            if (File.Exists(overlayPath))
+                foreach (string line in ReadDataLines(overlayPath).Where(IsHierarchyLine))
+                {
+                    string[] sides = line.Split(HierarchySeparator, 2, StringSplitOptions.TrimEntries);
+                    if (sides[0].Length == 0 || sides[1].Length == 0) continue;
+                    if (!direct.TryGetValue(sides[0], out HashSet<string>? parents))
+                        direct[sides[0]] = parents = new(StringComparer.OrdinalIgnoreCase);
+                    parents.Add(sides[1]);
+                }
+
+            Dictionary<string, IReadOnlySet<string>> closed = new(StringComparer.OrdinalIgnoreCase);
+            foreach (string skill in direct.Keys)
+            {
+                HashSet<string> all = new(StringComparer.OrdinalIgnoreCase);
+                Stack<string> todo = new(direct[skill]);
+                while (todo.TryPop(out string? next))
+                    if (!next.Equals(skill, StringComparison.OrdinalIgnoreCase) && all.Add(next)
+                            && direct.TryGetValue(next, out HashSet<string>? more))
+                        foreach (string m in more) todo.Push(m);
+                closed[skill] = all;
+            }
+            return closed;
         }
 
         private static IEnumerable<string> ReadDataLines(string path) =>
@@ -105,6 +144,7 @@ namespace GetJobCV.Modules
         {
             if (!File.Exists(path)) return [];
             return [.. ReadDataLines(path)
+                .Where(l => !IsHierarchyLine(l))
                 .Select(l => l.Split('\t')[0].Trim())
                 .Where(l => l.Length > 0)];
         }
