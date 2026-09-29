@@ -72,7 +72,7 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 ### 8. Application
 - [x] Background processing and error handling
 - [x] Redo UI: start, progress, and report screens instead of a debug text dump
-- [ ] Export the report
+- [x] Export the report as a self-contained HTML file (opens offline, prints to PDF)
 - [ ] Job-posting scraping as a job-description source ("web scraping") [C Fig. 2]
 
 Out of scope for a local tool: the hosted-ATS features in [C] (interview scheduling, email automation, assessments, cloud deployment).

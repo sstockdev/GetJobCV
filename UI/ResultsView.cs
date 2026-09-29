@@ -114,7 +114,7 @@ namespace GetJobCV.UI
             ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(cosine, skills.WeightCoverage);
             _ring.Value = combined.Overall;
             _verdict.Text = combined.Verdict;
-            _advice.Text = Advice(skills);
+            _advice.Text = ReportText.Advice(skills);
             _coveragePct.Text = $"{skills.WeightCoverage * 100:F0}%";
             _coverageBar.Value = skills.WeightCoverage;
             _similarityPct.Text = $"{cosine * 100:F0}%";
@@ -166,33 +166,6 @@ namespace GetJobCV.UI
             _staleNote.Text = stale ? "Changed since the last run" : "";
         }
 
-        private static string Advice(SkillMatcher.SkillReport skills)
-        {
-            if (skills.Matched.Count == 0 && skills.Missing.Count == 0)
-                return "No known skills were recognized in the job description, so the score is text similarity only.";
-
-            List<string> notes = [];
-            int missing = skills.Missing.Count(s => !s.Preferred);
-            if (missing > 0)
-                notes.Add($"{missing} skill{(missing == 1 ? "" : "s")} the job requires {(missing == 1 ? "wasn't" : "weren't")} found in your resume.");
-
-            int missingNice = skills.Missing.Count(s => s.Preferred);
-            if (missingNice > 0)
-                notes.Add($"{missingNice} nice-to-have skill{(missingNice == 1 ? " is" : "s are")} missing{(missing > 0 ? " too" : "")}.");
-
-            int weak = skills.Matched.Count(s => s.Evidence < SkillMatcher.UsedEvidence);
-            if (weak > 0)
-                notes.Add($"{weak} matched skill{(weak == 1 ? " is" : "s are")} only listed or mentioned, not shown in use.");
-
-            int shortYears = skills.Matched.Count(IsShortOnYears);
-            if (shortYears > 0)
-                notes.Add($"{shortYears} skill{(shortYears == 1 ? " shows" : "s show")} fewer years than the job asks for.");
-
-            if (skills.OverallYears is { Credit: < 1.0 } overall)
-                notes.Add($"The job asks for {overall.RequiredMonths / 12}+ years of experience.");
-
-            return notes.Count > 0 ? string.Join(" ", notes) : "Every skill the job asks for is shown in use.";
-        }
 
         // ---- Building ----
 
@@ -425,30 +398,8 @@ namespace GetJobCV.UI
 
         private SkillChip Chip(SkillMatcher.ScoredSkill skill, ChipStyle style)
         {
-            string? years = skill.RequiredMonths is not { } required ? null
-                : skill.Section is null ? $"{required / 12}+ yrs"
-                : IsShortOnYears(skill) ? $"{skill.ShownMonths / 12.0:0.#} of {required / 12}+ yrs"
-                : null;
-            string? tag = WhereFound(skill) is { } where
-                ? years is null ? where : $"{where} · {years}"
-                : years;
-
-            SkillChip chip = new(skill.Name, skill.Tier, tag, style) { Dashed = skill.Preferred };
-            string demand = skill.Tier switch { 2 => "Hot skill", 1 => "In-demand skill", _ => "Skill" };
-            string evidence = skill.Section switch
-            {
-                null => "not found in the resume",
-                SectionType.Skills => "only in the Skills list, counts half",
-                SectionType s when skill.Evidence < SkillMatcher.UsedEvidence =>
-                    $"mentioned in {s}, counts {skill.Evidence:P0}",
-                SectionType s => $"shown in use in {s}",
-            };
-            string wanted = skill.RequiredMonths is { } months
-                ? $" · job asks for {months / 12}+ years" +
-                  (skill.Section is null ? "" : $", resume shows {skill.ShownMonths / 12.0:0.#}")
-                : "";
-            string niceToHave = skill.Preferred ? $" · nice to have, counts {SkillMatcher.PreferredWeight:P0} of a required skill" : "";
-            string explanation = $"{demand} · {evidence}{wanted}{niceToHave}";
+            SkillChip chip = new(skill.Name, skill.Tier, ReportText.Tag(skill), style) { Dashed = skill.Preferred };
+            string explanation = ReportText.Explanation(skill);
             _tips.SetToolTip(chip, explanation);
 
             // Keyboard focus gets the hover explanation too. It goes in the name because
@@ -458,21 +409,6 @@ namespace GetJobCV.UI
             chip.LostFocus += (_, _) => _tips.Hide(chip);
             return chip;
         }
-
-        private static bool IsShortOnYears(SkillMatcher.ScoredSkill skill) =>
-            skill.Section is not null && skill.RequiredMonths is { } required && skill.ShownMonths < required;
-
-        /// <summary>
-        /// Tags skills the resume doesn't show being used, since they count for less.
-        /// </summary>
-        private static string? WhereFound(SkillMatcher.ScoredSkill skill) => skill.Section switch
-        {
-            null => null,
-            SectionType.Skills => "skills list",
-            SectionType.Contact => "profile link",
-            SectionType s when skill.Evidence < SkillMatcher.UsedEvidence => s.ToString().ToLowerInvariant(),
-            _ => null,
-        };
 
         private void FillCandidate(ContactInfo contact)
         {
@@ -490,7 +426,7 @@ namespace GetJobCV.UI
             key.Width = 72;
             key.AutoSize = false;
             Label shown;
-            if (value is not null && url is not null && ToWebUri(url) is { } uri)
+            if (value is not null && url is not null && ReportText.WebUri(url) is { } uri)
             {
                 LinkLabel link = new()
                 {
@@ -517,13 +453,6 @@ namespace GetJobCV.UI
             return row;
         }
 
-        private static Uri? ToWebUri(string url)
-        {
-            string withScheme = url.Contains("://", StringComparison.Ordinal) ? url : "https://" + url;
-            return Uri.TryCreate(withScheme, UriKind.Absolute, out Uri? uri) &&
-                   (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp) ? uri : null;
-        }
-
         private void FillExperience(IReadOnlyList<ExperienceEntry> roles, ExperienceSummary summary,
             SkillMatcher.YearsCheck? required)
         {
@@ -533,27 +462,17 @@ namespace GetJobCV.UI
                 Stack total = new() { Gap = 2 };
                 total.Controls.Add(WrapLabel($"{summary.TotalYears:0.#} years of professional experience",
                     Theme.Body(9.75f, FontStyle.Bold), Theme.Ink));
-                if (required is not null)
-                    total.Controls.Add(WrapLabel(required.Credit >= 1.0
-                            ? $"Meets the job's {required.RequiredMonths / 12}+ years"
-                            : $"Job asks for {required.RequiredMonths / 12}+ years",
-                        Theme.Body(9f, FontStyle.Bold), required.Credit >= 1.0 ? Theme.Matched.Ink : Theme.Missing.Ink));
+                if (ReportText.OverallYears(required) is { } overall)
+                    total.Controls.Add(WrapLabel(overall,
+                        Theme.Body(9f, FontStyle.Bold), required!.Credit >= 1.0 ? Theme.Matched.Ink : Theme.Missing.Ink));
                 rows.Add(total);
             }
 
             foreach (ExperienceEntry role in roles)
-            {
-                List<string> meta = [.. new[] { role.Organization, role.Dates.Text, role.Location }
-                    .OfType<string>().Where(s => !string.IsNullOrWhiteSpace(s))];
-                if (role.Section != SectionType.Experience)
-                    meta.Add(role.Section.ToString());
-                rows.Add(Entry(role.Title ?? role.Organization ?? "Untitled role", string.Join(" · ", meta)));
-            }
+                rows.Add(Entry(role.Title ?? role.Organization ?? "Untitled role", ReportText.RoleDetails(role)));
 
-            if (summary.SkillMonths.Count > 0)
-                rows.Add(WrapLabel("Most time with: " + string.Join(", ",
-                    summary.SkillMonths.Take(5).Select(s => $"{s.Skill} {s.Months / 12.0:0.#} yrs")),
-                    Theme.Body(8.25f), Theme.Muted));
+            if (ReportText.MostTimeWith(summary) is { } mostTime)
+                rows.Add(WrapLabel(mostTime, Theme.Body(8.25f), Theme.Muted));
 
             if (rows.Count == 0)
                 rows.Add(Muted("No roles found"));
@@ -562,22 +481,15 @@ namespace GetJobCV.UI
 
         private void FillEducation(IReadOnlyList<EducationEntry> schools, IReadOnlyList<ResumeSection> sections)
         {
-            List<Control> rows = [.. schools.Select(e => Entry(e.Degree ?? e.School ?? "Unnamed school",
-                string.Join(" · ", new[] { e.Degree is null ? null : e.School, e.Dates?.Text, e.Gpa is null ? null : $"GPA {e.Gpa}" }
-                    .Where(s => !string.IsNullOrWhiteSpace(s)))))];
+            List<Control> rows = [.. schools.Select(e => Entry(e.Degree ?? e.School ?? "Unnamed school", ReportText.SchoolDetails(e)))];
             if (rows.Count == 0)
                 rows.Add(Muted("No schools found"));
             Replace(_education, rows);
 
             Replace(_sections, sections.Count == 0
                 ? [Muted("None")]
-                : sections.Select(s => (Control)new SkillChip(SectionName(s), 0, null, Theme.Extra)));
+                : sections.Select(s => (Control)new SkillChip(ReportText.SectionName(s), 0, null, Theme.Extra)));
         }
-
-        private static string SectionName(ResumeSection s) =>
-            s.Type == SectionType.Contact || s.Heading.Equals(s.Type.ToString(), StringComparison.OrdinalIgnoreCase)
-                ? s.Type.ToString()
-                : $"{s.Type} (\"{s.Heading}\")";
 
         private static Stack Entry(string title, string meta)
         {

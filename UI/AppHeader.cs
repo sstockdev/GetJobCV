@@ -1,11 +1,12 @@
 namespace GetJobCV.UI
 {
     /// <summary>
-    /// Top bar: wordmark, status pill, and the New analysis button.
+    /// Top bar: wordmark, status pill, and the Export report and New analysis buttons.
     /// </summary>
     internal sealed class AppHeader : Panel
     {
         public Pill Status { get; } = new() { Anchor = AnchorStyles.Left, Margin = new Padding(16, 0, 0, 0) };
+        public Button ExportReport { get; } = Theme.Button("Export report", Theme.ButtonKind.Secondary);
         public Button NewAnalysis { get; } = Theme.Button("New analysis", Theme.ButtonKind.Primary);
 
         public AppHeader()
@@ -16,19 +17,25 @@ namespace GetJobCV.UI
 
             Wordmark wordmark = new() { Anchor = AnchorStyles.Left, Margin = new Padding(0) };
 
-            NewAnalysis.Anchor = AnchorStyles.Right;
-            NewAnalysis.Height = 40;
+            foreach (Button button in new[] { ExportReport, NewAnalysis })
+            {
+                button.Anchor = AnchorStyles.Right;
+                button.Height = 40;
+            }
+            ExportReport.Margin = new Padding(0, 0, 12, 0);
             NewAnalysis.Margin = new Padding(0);
 
-            TableLayoutPanel bar = new() { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 1, Padding = new Padding(24, 0, 24, 0) };
+            TableLayoutPanel bar = new() { Dock = DockStyle.Fill, ColumnCount = 5, RowCount = 1, Padding = new Padding(24, 0, 24, 0) };
             bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             bar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             bar.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             bar.Controls.Add(wordmark, 0, 0);
             bar.Controls.Add(Status, 1, 0);
-            bar.Controls.Add(NewAnalysis, 3, 0);
+            bar.Controls.Add(ExportReport, 3, 0);
+            bar.Controls.Add(NewAnalysis, 4, 0);
 
             Controls.Add(bar);
             Controls.Add(new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Theme.Border });

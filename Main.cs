@@ -30,6 +30,9 @@ namespace GetJobCV
         private CancellationTokenSource? _cancel;
         private Task _running = Task.CompletedTask;
 
+        // The report on screen, for Export. Edits since the run aren't in it.
+        private ReportInput? _report;
+
         public Main()
         {
             InitializeComponent();
@@ -51,6 +54,7 @@ namespace GetJobCV
                 ShowView(_inputs);
                 _header.Status.Show(Pill.Kind.Ready, "Analysis cancelled");
             };
+            _header.ExportReport.Click += (_, _) => ExportReport();
             _header.NewAnalysis.Click += (_, _) =>
             {
                 _start.ResumePath = null;
@@ -72,6 +76,35 @@ namespace GetJobCV
             foreach (Control v in new Control[] { _start, _analyzing, _results })
                 v.Visible = v == view;
             _header.NewAnalysis.Visible = view == _results;
+            _header.ExportReport.Visible = view == _results;
+        }
+
+        /// <summary>
+        /// Saves the report on screen as an HTML file.
+        /// </summary>
+        private void ExportReport()
+        {
+            if (_report is null)
+                return;
+
+            using SaveFileDialog dialog = new()
+            {
+                Filter = "Web page (*.html)|*.html",
+                FileName = $"{Path.GetFileNameWithoutExtension(_report.ResumeFileName)} report.html",
+                RestoreDirectory = true,
+            };
+            if (dialog.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            try
+            {
+                File.WriteAllText(dialog.FileName, ReportHtml.Build(_report), new UTF8Encoding(false));
+                _header.Status.Show(Pill.Kind.Ready, $"Saved {Path.GetFileName(dialog.FileName)}");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _header.Status.Show(Pill.Kind.Error, $"Couldn't save the report ({ex.Message})");
+            }
         }
 
         /// <summary>
@@ -161,6 +194,8 @@ namespace GetJobCV
 
                 _results.ShowResult(filePath, jobDescription, result.Record, result.Experience,
                     result.Sections, result.Skills, result.Score);
+                _report = new ReportInput(Path.GetFileName(filePath), jobDescription, DateTime.Now,
+                    result.Record, result.Experience, result.Sections, result.Skills, result.Score);
                 ShowView(_results);
                 _header.Status.Show(Pill.Kind.Ready, "Ready");
             }
