@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using GetJobCV.Modules;
 using GetJobCV.UI;
 using Microsoft.Web.WebView2.Core;

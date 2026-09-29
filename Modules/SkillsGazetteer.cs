@@ -96,18 +96,19 @@ namespace GetJobCV.Modules
         /// </summary>
         public static IReadOnlyDictionary<string, IReadOnlySet<string>> LoadParents(string overlayPath = OverlayPath)
         {
-            Dictionary<string, HashSet<string>> direct = new(StringComparer.OrdinalIgnoreCase);
-            if (File.Exists(overlayPath))
-                foreach (string line in ReadDataLines(overlayPath).Where(IsHierarchyLine))
-                {
-                    string[] sides = line.Split(HierarchySeparator, 2, StringSplitOptions.TrimEntries);
-                    if (sides[0].Length == 0 || sides[1].Length == 0) continue;
-                    if (!direct.TryGetValue(sides[0], out HashSet<string>? parents))
-                        direct[sides[0]] = parents = new(StringComparer.OrdinalIgnoreCase);
-                    parents.Add(sides[1]);
-                }
-
             Dictionary<string, IReadOnlySet<string>> closed = new(StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(overlayPath)) return closed;
+
+            Dictionary<string, HashSet<string>> direct = new(StringComparer.OrdinalIgnoreCase);
+            foreach (string line in ReadDataLines(overlayPath).Where(IsHierarchyLine))
+            {
+                string[] sides = line.Split(HierarchySeparator, 2, StringSplitOptions.TrimEntries);
+                if (sides[0].Length == 0 || sides[1].Length == 0) continue;
+                if (!direct.TryGetValue(sides[0], out HashSet<string>? parents))
+                    direct[sides[0]] = parents = new(StringComparer.OrdinalIgnoreCase);
+                parents.Add(sides[1]);
+            }
+
             foreach (string skill in direct.Keys)
             {
                 HashSet<string> all = new(StringComparer.OrdinalIgnoreCase);

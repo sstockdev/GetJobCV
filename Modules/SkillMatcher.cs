@@ -153,7 +153,7 @@ namespace GetJobCV.Modules
             IReadOnlyDictionary<string, IReadOnlySet<string>>? parents = null)
         {
             Dictionary<string, SectionType> resume = BestSections(resumeMentions);
-            var (implied, impliedMonths) = Implied(resume, parents, shownMonths);
+            Dictionary<string, List<string>> implied = Implied(resume, parents);
             HashSet<string> job = Distinct(jobSkills);
             HashSet<string> niceToHave = new(preferred ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
 
@@ -173,9 +173,10 @@ namespace GetJobCV.Modules
             ScoredSkill Score(string name, SectionType? section, bool isJobSkill, IReadOnlyList<string>? impliedBy = null)
             {
                 int? group = isJobSkill && groupOf.TryGetValue(name, out int g) ? g : null;
-                int months = shownMonths?.GetValueOrDefault(name) ?? 0;
-                if (isJobSkill)
-                    months = Math.Max(months, impliedMonths.GetValueOrDefault(name));
+                int Months(string skill) => shownMonths?.GetValueOrDefault(skill) ?? 0;
+                int months = Months(name);
+                if (isJobSkill && implied.TryGetValue(name, out List<string>? by))
+                    months = Math.Max(months, by.Max(Months));
                 return new(
                     name,
                     tiers.GetValueOrDefault(name),
@@ -193,8 +194,8 @@ namespace GetJobCV.Modules
             ScoredSkill? Found(string name)
             {
                 bool named = resume.TryGetValue(name, out SectionType section);
-                if (implied.TryGetValue(name, out var via) && (!named || EvidenceFor(via.Section) > EvidenceFor(section)))
-                    return Score(name, via.Section, true, via.Skills);
+                if (implied.TryGetValue(name, out List<string>? via) && (!named || EvidenceFor(resume[via[0]]) > EvidenceFor(section)))
+                    return Score(name, resume[via[0]], true, via);
                 return named ? Score(name, section, true) : null;
             }
 
@@ -286,35 +287,31 @@ namespace GetJobCV.Modules
         }
 
         /// <summary>
-        /// The general skills the resume's specific ones imply: each with the strongest
-        /// section, the skills that imply it (strongest first), and the most months any shows.
+        /// The general skills the resume's specific ones imply, each to the skills that imply
+        /// it, strongest evidence first (so the first one's section is the one that counts).
         /// </summary>
-        private static (Dictionary<string, (SectionType Section, IReadOnlyList<string> Skills)> Via, Dictionary<string, int> Months) Implied(
+        private static Dictionary<string, List<string>> Implied(
             Dictionary<string, SectionType> resume,
-            IReadOnlyDictionary<string, IReadOnlySet<string>>? parents,
-            IReadOnlyDictionary<string, int>? shownMonths)
+            IReadOnlyDictionary<string, IReadOnlySet<string>>? parents)
         {
-            Dictionary<string, (SectionType Section, IReadOnlyList<string> Skills)> via = new(StringComparer.OrdinalIgnoreCase);
-            Dictionary<string, int> months = new(StringComparer.OrdinalIgnoreCase);
-            if (parents is null) return (via, months);
+            Dictionary<string, List<string>> via = new(StringComparer.OrdinalIgnoreCase);
+            if (parents is null) return via;
 
             // Strongest evidence first, then alphabetical, so a tie always names the same skill
-            foreach (var (skill, section) in resume
+            foreach (string skill in resume
                 .OrderByDescending(p => EvidenceFor(p.Value))
-                .ThenBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+                .ThenBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(p => p.Key))
             {
                 if (!parents.TryGetValue(skill, out IReadOnlySet<string>? generals)) continue;
-                int shown = shownMonths?.GetValueOrDefault(skill) ?? 0;
                 foreach (string general in generals)
                 {
-                    if (via.TryGetValue(general, out var best))
-                        ((List<string>)best.Skills).Add(skill);
-                    else
-                        via[general] = (section, new List<string> { skill });
-                    months[general] = Math.Max(months.GetValueOrDefault(general), shown);
+                    if (!via.TryGetValue(general, out List<string>? skills))
+                        via[general] = skills = [];
+                    skills.Add(skill);
                 }
             }
-            return (via, months);
+            return via;
         }
 
         /// <summary>
