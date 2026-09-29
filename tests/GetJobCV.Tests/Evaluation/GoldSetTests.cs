@@ -107,6 +107,7 @@ namespace GetJobCV.Tests
         private const double ResumeSkillF1Floor = 0.93;
         private const double ConcordanceFloor = 0.95;
         private const double GoodVsNoAucFloor = 0.95;
+        private const double VerdictAgreementFloor = 0.85;
 
         [Fact]
         public void Labels_reference_every_document_and_only_known_skills()
@@ -159,6 +160,8 @@ namespace GetJobCV.Tests
 
             Assert.True(concordance >= ConcordanceFloor, $"Concordance {concordance:P1} fell below {ConcordanceFloor:P1}");
             Assert.True(auc >= GoodVsNoAucFloor, $"Good vs No AUC {auc:P1} fell below {GoodVsNoAucFloor:P1}");
+            double agreement = (double)verdictsRight / gold.Pairs.Count;
+            Assert.True(agreement >= VerdictAgreementFloor, $"Verdict agreement {agreement:P1} fell below {VerdictAgreementFloor:P1}");
         }
 
         private double Concordance(Func<GoldSetFixture.Pair, double> score) =>

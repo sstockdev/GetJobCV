@@ -29,9 +29,9 @@ namespace GetJobCV.Tests
         {
             string html = ReportHtml.Build(Input());
 
-            // 0.6 × 70% coverage + 0.4 × 40% similarity = 58%
-            Assert.Contains("aria-label=\"Overall score 58%\"", html);
-            Assert.Contains(ScoreCombiner.Verdict(0.58), html);
+            // 0.5 × 70% coverage + 0.5 × 40% similarity = 55%
+            Assert.Contains("aria-label=\"Overall score 55%\"", html);
+            Assert.Contains(ScoreCombiner.Verdict(0.55), html);
             Assert.Contains("<th scope=\"row\">Kubernetes</th>", html);
             Assert.Contains("job asks for 3+ years, resume shows 3.3", html);
             Assert.Contains("Software Engineer", html);
