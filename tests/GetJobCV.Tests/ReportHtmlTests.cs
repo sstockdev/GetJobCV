@@ -21,7 +21,7 @@ namespace GetJobCV.Tests
                 [new ScoredSkill("Kubernetes", 2), new ScoredSkill("Docker", 2), new ScoredSkill("Terraform", 1)],
                 [new ScoredSkill("React", 1, SectionType.Projects)],
                 new YearsCheck(60, 40),
-                0.7),
+                0.7) { JobSkillCount = 5 },
             0.4);
 
         [Fact]

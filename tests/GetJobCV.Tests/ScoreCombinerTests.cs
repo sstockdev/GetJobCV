@@ -5,9 +5,8 @@ namespace GetJobCV.Tests
 {
     public class ScoreCombinerTests
     {
-        private static SkillReport Report(int jobSkills, double coverage) => new(
-            [.. Enumerable.Range(0, jobSkills).Select(i => new ScoredSkill($"Skill {i}", 0, SectionType.Experience))],
-            [], [], new YearsCheck(48, 48), coverage);
+        private static SkillReport Report(int jobSkills, double coverage) =>
+            new([], [], [], new YearsCheck(48, 48), coverage) { JobSkillCount = jobSkills };
 
         [Fact]
         public void Holds_back_the_verdict_when_the_job_has_too_few_recognized_skills()

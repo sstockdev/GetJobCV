@@ -116,10 +116,9 @@ namespace GetJobCV.Modules
             double WeightCoverage)
         {
             /// <summary>
-            /// How many job description skills were recognized: matched plus missing. A group
-            /// of alternatives with a match counts only its matched members.
+            /// How many distinct skills were recognized in the job description, whatever the resume has.
             /// </summary>
-            public int JobSkillCount => Matched.Count + Missing.Count;
+            public required int JobSkillCount { get; init; }
         }
 
         /// <summary>
@@ -256,7 +255,7 @@ namespace GetJobCV.Modules
 
             double coverage = totalWeight > 0 ? coveredWeight / totalWeight : 0.0;
 
-            return new SkillReport(Sort(matched), Sort(missing), Sort(extra), overallYears, coverage);
+            return new SkillReport(Sort(matched), Sort(missing), Sort(extra), overallYears, coverage) { JobSkillCount = job.Count };
         }
 
         /// <summary>

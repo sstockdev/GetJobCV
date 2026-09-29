@@ -53,28 +53,11 @@ namespace GetJobCV.Modules
         /// </summary>
         public static CombinedScore Combine(double cosine, SkillMatcher.SkillReport skills)
         {
-            CombinedScore combined = Combine(cosine, skills.WeightCoverage);
-            return skills.JobSkillCount < MinJobSkills ? combined with { Verdict = TooFewSkillsVerdict } : combined;
-        }
-
-        /// <summary>
-        /// Method to combine the two scores.
-        /// </summary>
-        public static CombinedScore Combine(
-            double cosine,
-            double weightCoverage,
-            double cosineWeight = DefaultCosineWeight,
-            double coverageWeight = DefaultCoverageWeight)
-        {
             double c = Math.Clamp(cosine, 0.0, 1.0);
-            double w = Math.Clamp(weightCoverage, 0.0, 1.0);
+            double w = Math.Clamp(skills.WeightCoverage, 0.0, 1.0);
+            double overall = (c * DefaultCosineWeight + w * DefaultCoverageWeight) / (DefaultCosineWeight + DefaultCoverageWeight);
 
-            double total = cosineWeight + coverageWeight;
-            double overall = total > 0.0
-                ? (c * cosineWeight + w * coverageWeight) / total
-                : (c + w) / 2.0;
-
-            return new CombinedScore(overall, Verdict(overall));
+            return new CombinedScore(overall, skills.JobSkillCount < MinJobSkills ? TooFewSkillsVerdict : Verdict(overall));
         }
 
         public static string Verdict(double overall) => overall switch

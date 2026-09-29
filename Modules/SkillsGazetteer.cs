@@ -53,12 +53,13 @@ namespace GetJobCV.Modules
         /// </summary>
         private static List<ShortName> ShortNames(string path, string overlayPath)
         {
-            HashSet<string> overlaid = [.. OverlayAliasKeys(overlayPath)];
-            HashSet<string> known = new(LoadCategorized(path).Select(e => e.Name), StringComparer.OrdinalIgnoreCase);
+            IReadOnlyList<SkillEntry> entries = LoadCategorized(path);
+            HashSet<string> overlaid = new(OverlayAliases(overlayPath).Select(a => a.Alias), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> known = new(entries.Select(e => e.Name), StringComparer.OrdinalIgnoreCase);
             known.UnionWith(LoadOverlay(overlayPath).Select(n => n.TrimStart(CaseSensitivePrefix).Trim()));
 
             List<ShortName> shortNames = [];
-            foreach (SkillEntry e in LoadCategorized(path))
+            foreach (SkillEntry e in entries)
             {
                 if (e.Category != "Technology" || overlaid.Contains(e.Name)
                         || !e.Name.EndsWith(SoftwareSuffix, StringComparison.OrdinalIgnoreCase))
@@ -73,11 +74,11 @@ namespace GetJobCV.Modules
                     shortNames.Add(new(acronym, acronym, true));
                     shortNames.Add(new(acronym + "s", acronym, true));
                     string[] expanded = expansion.Split(' ');
-                    foreach (string form in Plural(expanded[^1]) is { } plural
-                            ? [expansion, string.Join(' ', [.. expanded[..^1], plural])]
-                            : new[] { expansion })
-                        if (!known.Contains(form))
-                            shortNames.Add(new(form, acronym, false));
+                    List<string> forms = [expansion];
+                    if (Plural(expanded[^1]) is { } plural)
+                        forms.Add(string.Join(' ', [.. expanded[..^1], plural]));
+                    foreach (string form in forms.Where(f => !known.Contains(f)))
+                        shortNames.Add(new(form, acronym, false));
                 }
                 else if (words.Any(w => w.Skip(1).Any(char.IsUpper)))
                 {
@@ -123,12 +124,22 @@ namespace GetJobCV.Modules
             return null;
         }
 
-        private static IEnumerable<string> OverlayAliasKeys(string overlayPath) =>
-            File.Exists(overlayPath)
-                ? ReadDataLines(overlayPath)
-                    .Where(l => !IsHierarchyLine(l) && l.Contains('\t'))
-                    .Select(l => l[..l.IndexOf('\t')].Trim().TrimStart(CaseSensitivePrefix).Trim())
-                : [];
+        /// <summary>
+        /// Overlay "alias&lt;TAB&gt;Canonical" lines, alias without any '=' prefix.
+        /// </summary>
+        private static IEnumerable<(string Alias, string Canonical)> OverlayAliases(string overlayPath)
+        {
+            if (!File.Exists(overlayPath)) yield break;
+            foreach (string line in ReadDataLines(overlayPath).Where(l => !IsHierarchyLine(l)))
+            {
+                int tab = line.IndexOf('\t');
+                if (tab < 0) continue;
+                string alias = line[..tab].Trim().TrimStart(CaseSensitivePrefix).Trim();
+                string canonical = line[(tab + 1)..].Trim();
+                if (alias.Length > 0 && canonical.Length > 0)
+                    yield return (alias, canonical);
+            }
+        }
 
         /// <summary>
         /// Overlay lines starting with this are matched case-sensitively, for skills
@@ -139,7 +150,7 @@ namespace GetJobCV.Modules
         /// <summary>
         /// Overlay skills that must match case-sensitively, prefix stripped.
         /// </summary>
-        public static IReadOnlyList<string> LoadCaseSensitive(string overlayPath = OverlayPath, string path = DefaultPath) =>
+        public static IReadOnlyList<string> LoadCaseSensitive(string path = DefaultPath, string overlayPath = OverlayPath) =>
             [.. LoadOverlay(overlayPath)
                 .Where(n => n.StartsWith(CaseSensitivePrefix))
                 .Select(n => n[1..].Trim())
@@ -158,7 +169,7 @@ namespace GetJobCV.Modules
                 if (!tiers.TryGetValue(e.Name, out int existing) || e.Weight > existing)
                     tiers[e.Name] = e.Weight;
 
-            foreach ((string alias, string canonical) in LoadAliases(overlayPath, path))
+            foreach ((string alias, string canonical) in LoadAliases(path, overlayPath))
                 if (tiers.TryGetValue(alias, out int tier) && tier > tiers.GetValueOrDefault(canonical))
                     tiers[canonical] = tier;
             return tiers;
@@ -170,20 +181,12 @@ namespace GetJobCV.Modules
         /// the <see cref="ShortNames"/> of O*NET "... software" entries.
         /// Case-insensitive keys. Aliases don't chain.
         /// </summary>
-        public static IReadOnlyDictionary<string, string> LoadAliases(string overlayPath = OverlayPath, string path = DefaultPath)
+        public static IReadOnlyDictionary<string, string> LoadAliases(string path = DefaultPath, string overlayPath = OverlayPath)
         {
             Dictionary<string, string> aliases = WordForms(overlayPath);
             Dictionary<string, string> overlay = new(StringComparer.OrdinalIgnoreCase);
-            if (File.Exists(overlayPath))
-                foreach (string line in ReadDataLines(overlayPath).Where(l => !IsHierarchyLine(l)))
-                {
-                    int tab = line.IndexOf('\t');
-                    if (tab < 0) continue;
-                    string alias = line[..tab].Trim().TrimStart(CaseSensitivePrefix).Trim();
-                    string canonical = line[(tab + 1)..].Trim();
-                    if (alias.Length > 0 && canonical.Length > 0)
-                        aliases[alias] = overlay[alias] = canonical;
-                }
+            foreach ((string alias, string canonical) in OverlayAliases(overlayPath))
+                aliases[alias] = overlay[alias] = canonical;
 
             // The overlay's own aliases win, and a short name it aliases reports as its target
             foreach (ShortName s in ShortNames(path, overlayPath))
