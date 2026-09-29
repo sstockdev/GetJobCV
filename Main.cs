@@ -104,6 +104,7 @@ namespace GetJobCV
 
                 DebugTextBox.Text =
                    FormatRecord(result.Record) +
+                   FormatExperience(result.Experience) +
                    $"Sections: {FormatSections(result.Sections)}\r\n\r\n" +
                    $"People: {string.Join(", ", result.Ner.People)}\r\n" +
                    $"Orgs: {string.Join(", ", result.Ner.Organizations)}\r\n" +
@@ -132,6 +133,7 @@ namespace GetJobCV
             Socials Socials,
             IReadOnlyList<ResumeSection> Sections,
             ResumeRecord Record,
+            ExperienceSummary Experience,
             NerResult Ner,
             double Score,
             SkillMatcher.SkillReport Skills);
@@ -187,6 +189,13 @@ namespace GetJobCV
             NerResult resumeNer = NerResult.Merge(sectionNer.Select(s => s.Ner));
             NerResult jdNer = ner.Extract(jobDescription);
 
+            // Per-role skills give each skill the months of the jobs that use it
+            ExperienceSummary experience = ExperienceCalculator.Summarize(
+                record.Experience
+                    .Where(role => role.Section == SectionType.Experience)
+                    .Select(role => (role, (IEnumerable<string>)ner.Extract(role.Text).Skills)),
+                DateOnly.FromDateTime(DateTime.Today));
+
             // Run preprocessing on text
             status.Report("Preprocessing Text");
             string[] resumeTokens = PreProcessor.Preprocess(resumeText);
@@ -210,7 +219,7 @@ namespace GetJobCV
             SkillMatcher.SkillReport skillReport =
                 SkillMatcher.Match(resumeSkills, jdNer.Skills, skillTiers);
 
-            return new AnalysisResult(socials, sections, record, resumeNer, score, skillReport);
+            return new AnalysisResult(socials, sections, record, experience, resumeNer, score, skillReport);
         }
 
         private static string FormatRecord(ResumeRecord record)
@@ -235,6 +244,15 @@ namespace GetJobCV
                     (x.Section == SectionType.Experience ? "" : $" [{x.Section}]") + "\r\n");
 
             return sb.Append("\r\n").ToString();
+        }
+
+        private static string FormatExperience(ExperienceSummary experience)
+        {
+            string perSkill = experience.SkillMonths.Count == 0
+                ? "(none)"
+                : string.Join(", ", experience.SkillMonths.Select(s => $"{s.Skill} {s.Months / 12.0:0.#}y"));
+            return $"Professional experience: {experience.TotalYears:0.#} years\r\n" +
+                   $"By skill: {perSkill}\r\n\r\n";
         }
 
         private static string FormatSections(IReadOnlyList<ResumeSection> sections)

@@ -27,8 +27,9 @@ namespace GetJobCV.Modules
     /// <summary>
     /// One role from an Experience, Leadership, or Volunteer section.
     /// </summary>
+    /// <param name="Text">The role's lines, bullets included</param>
     public sealed record ExperienceEntry(
-        string? Title, string? Organization, string? Location, DateRange Dates, SectionType Section);
+        string? Title, string? Organization, string? Location, DateRange Dates, SectionType Section, string Text);
 
     /// <summary>
     /// The resume as structured data instead of free text.
@@ -161,7 +162,7 @@ namespace GetJobCV.Modules
                 (title, orgLine) = (other, title);
 
             (string? org, string? location) = orgLine is null ? (null, null) : SplitLocation(orgLine);
-            return new ExperienceEntry(title, org, location, dates!, section);
+            return new ExperienceEntry(title, org, location, dates!, section, string.Join('\n', entry));
         }
 
         /// <summary>

@@ -30,7 +30,7 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 - [x] Skill gazetteer from O\*NET plus a curated overlay, with demand tiers
 - [x] Extract GitHub and LinkedIn socials
 - [x] Structured resume record: name, contact, education (degree, school, dates), job titles, companies, dates [P III.A]
-- [ ] Years of experience, overall and per skill ("Skills and Experience showed significantly improved shortlisting") [C Section 6]
+- [x] Years of experience, overall and per skill ("Skills and Experience showed significantly improved shortlisting") [C Section 6]
 - [ ] Skill aliases → canonical names (JS → JavaScript, Git → source control)
 - [ ] Parse the GitHub profile via the public API: repo languages and topics as a second skill source [C Fig. 1]
 - [ ] Parse a LinkedIn profile from a user-supplied export (LinkedIn has no public profile API) [C Fig. 1]
