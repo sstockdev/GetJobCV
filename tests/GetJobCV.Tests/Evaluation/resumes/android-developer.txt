@@ -1,0 +1,22 @@
+Maria Kowalski
+Rochester, MN · maria.kowalski@example.com
+
+SUMMARY
+Android developer with 4 years building apps in Kotlin and Java.
+
+EXPERIENCE
+Android Developer | Zumbro Telehealth | Rochester, MN  Mar 2022 - Present
+- Build the patient app in Kotlin with Jetpack Compose
+- Store data offline with Room and sync it through REST APIs
+- Write unit tests with JUnit and Espresso
+- Publish releases to Google Play
+
+Junior Android Developer | Med City Transit | Rochester, MN  Jun 2020 - Feb 2022
+- Maintained the bus tracker app in Java
+- Added Firebase push notifications
+
+EDUCATION
+B.S. Software Engineering, Winona State University  2016 - 2020
+
+SKILLS
+Kotlin, Java, Android, Jetpack Compose, Room, Firebase, JUnit, Espresso, Git

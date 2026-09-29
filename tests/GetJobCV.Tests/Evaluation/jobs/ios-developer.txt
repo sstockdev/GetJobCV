@@ -1,0 +1,24 @@
+iOS Developer
+Loonlight Health · Saint Paul, MN (Hybrid)
+
+About us
+Loonlight builds a sleep coaching app used by 2 million people. We're adding an iOS Developer to our mobile team.
+
+What you'll do
+- Build new features in Swift and SwiftUI
+- Maintain older screens written in UIKit
+- Integrate with our REST APIs
+- Write unit tests with XCTest
+- Ship releases to the App Store
+
+Requirements
+- 3+ years building iOS apps
+- Strong Swift skills
+- Experience with SwiftUI and UIKit
+- Experience with Core Data
+- Git
+
+Nice to have
+- Objective-C
+- HealthKit
+- CI/CD for mobile apps (Fastlane)

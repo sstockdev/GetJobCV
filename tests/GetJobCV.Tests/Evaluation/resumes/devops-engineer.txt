@@ -1,0 +1,27 @@
+Priya Raman
+Ames, IA · priya.raman@example.com
+github.com/priyaraman
+
+SUMMARY
+DevOps engineer with 5 years automating AWS infrastructure for fintech teams.
+
+EXPERIENCE
+DevOps Engineer | Hawkeye Payments | Des Moines, IA  Mar 2022 - Present
+- Manage AWS accounts for 30 services with Terraform modules
+- Run workloads on Kubernetes (EKS) and package them with Helm
+- Built GitHub Actions pipelines that cut deploy time from 40 to 8 minutes
+- Set up Prometheus, Grafana, and PagerDuty alerting; lead incident response and postmortems
+
+Systems Engineer | Heartland Insurance Group | West Des Moines, IA  Jun 2019 - Feb 2022
+- Administered 200 Linux servers (Red Hat Enterprise Linux, Ubuntu)
+- Automated server builds with Ansible and Bash scripts
+- Moved legacy apps into Docker containers
+
+EDUCATION
+B.S. Computer Science, Iowa State University  2015 - 2019
+
+CERTIFICATIONS
+AWS Certified Solutions Architect - Associate
+
+SKILLS
+AWS, Terraform, Kubernetes, Docker, Helm, GitHub Actions, Prometheus, Grafana, Ansible, Linux, Python, Bash

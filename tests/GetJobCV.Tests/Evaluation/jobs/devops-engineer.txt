@@ -1,0 +1,25 @@
+DevOps Engineer
+Prairie Cloud Credit Union · Des Moines, IA (Remote)
+
+About the role
+Our platform team runs the infrastructure behind online banking for 400,000 members. We're hiring a DevOps Engineer to automate our cloud environments and keep them reliable.
+
+What you'll do
+- Build and maintain AWS infrastructure with Terraform
+- Run containerized services on Kubernetes
+- Own CI/CD pipelines in GitHub Actions
+- Set up monitoring and alerting with Prometheus and Grafana
+- Join the on-call rotation and lead incident response
+
+Requirements
+- 3+ years in a DevOps, SRE, or systems engineering role
+- Hands-on experience with AWS
+- Experience with Terraform or CloudFormation
+- Strong Linux administration skills
+- Scripting in Python or Bash
+- Experience with Docker and Kubernetes
+
+Nice to have
+- Ansible
+- AWS Certified Solutions Architect
+- Experience in a regulated industry

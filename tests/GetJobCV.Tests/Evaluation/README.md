@@ -33,6 +33,10 @@ valid label. It records a gap the gazetteer should fill.
 
 Each job should have at least one pair of each fit, so the within-job ranking metrics have something to compare.
 
+**New documents.** Add and label them, then commit them with the floors they score, before fixing
+anything they turn up. That commit's numbers are the pipeline on text it wasn't tuned for, the closest
+this set gets to a held-out score. Tuning on them afterwards is fine, but it uses that up.
+
 ## Metrics
 
 - **Skill extraction:** micro-averaged precision, recall, and F1 of the skills NER finds in each document.

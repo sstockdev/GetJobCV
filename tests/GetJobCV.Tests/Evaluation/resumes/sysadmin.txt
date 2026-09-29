@@ -1,0 +1,26 @@
+Tom Brekke
+Fargo, ND · tbrekke@example.com
+
+SUMMARY
+Systems administrator with 7 years running on-premises Windows and Linux environments for a school district and a regional hospital.
+
+EXPERIENCE
+Systems Administrator | Red River Health | Fargo, ND  Apr 2021 - Present
+- Manage 150 Windows Server and Linux virtual machines on VMware vSphere
+- Administer Active Directory, Group Policy, and Microsoft 365
+- Write PowerShell and Bash scripts to automate patching and user onboarding
+- Monitor servers with Nagios and handle after-hours incidents
+
+IT Technician | Fargo Public Schools | Fargo, ND  Aug 2017 - Mar 2021
+- Supported 3,000 staff laptops and printers
+- Managed backups with Veeam
+- Configured Cisco switches and VLANs
+
+EDUCATION
+A.A.S. Network Administration, North Dakota State College of Science  2015 - 2017
+
+CERTIFICATIONS
+CompTIA Security+, Microsoft Certified: Azure Administrator Associate
+
+SKILLS
+Windows Server, Linux, VMware, Active Directory, PowerShell, Bash, Microsoft 365, Nagios, Veeam, networking

@@ -19,6 +19,21 @@
       "patient care", "medication administration", "IV therapy", "vital signs", "Epic Systems",
       "patient education", "BLS", "ACLS", "electronic health records", "communication",
       "critical thinking", "collaboration"
+    ],
+    "devops-engineer": [
+      "AWS", "Terraform", "Kubernetes", "containerization", "CI/CD", "GitHub Actions", "monitoring",
+      "Prometheus", "Grafana", "incident response", "CloudFormation", "Linux", "Python", "Bash", "Docker",
+      "Ansible", "AWS Certified Solutions Architect"
+    ],
+    "staff-accountant": [
+      "month-end close", "financial reporting", "journal entries", "account reconciliation", "general ledger",
+      "NetSuite", "accounts payable", "accounts receivable", "financial statements", "variance analysis",
+      "audit", "accounting", "GAAP", "Microsoft Excel", "pivot tables", "VLOOKUP", "attention to detail",
+      "CPA", "QuickBooks"
+    ],
+    "ios-developer": [
+      "Swift", "SwiftUI", "UIKit", "REST API", "unit testing", "XCTest", "iOS", "Core Data", "Git",
+      "Objective-C", "HealthKit", "CI/CD", "Fastlane"
     ]
   },
   "resumes": {
@@ -57,6 +72,33 @@
     "medical-assistant": [
       "vital signs", "Epic Systems", "phlebotomy", "EKG", "scheduling", "insurance verification", "CMA", "BLS",
       "medical terminology"
+    ],
+    "devops-engineer": [
+      "AWS", "Terraform", "Kubernetes", "EKS", "Helm", "GitHub Actions", "Prometheus", "Grafana", "PagerDuty",
+      "incident response", "Linux", "Red Hat Enterprise Linux", "Ubuntu", "Ansible", "Bash", "Docker",
+      "containerization", "AWS Certified Solutions Architect", "Python"
+    ],
+    "sysadmin": [
+      "Windows Server", "Linux", "VMware", "VMware vSphere", "Active Directory", "Group Policy", "Microsoft 365",
+      "PowerShell", "Bash", "monitoring", "Nagios", "Veeam", "Cisco", "VLAN", "CompTIA Security+", "Azure",
+      "networking"
+    ],
+    "staff-accountant": [
+      "general ledger", "month-end close", "journal entries", "accruals", "account reconciliation", "NetSuite",
+      "depreciation", "audit", "accounts payable", "QuickBooks", "GAAP", "Microsoft Excel", "pivot tables",
+      "VLOOKUP", "attention to detail", "CPA"
+    ],
+    "bookkeeper": [
+      "bookkeeping", "QuickBooks", "accounts payable", "accounts receivable", "payroll", "bank reconciliation",
+      "sales tax", "billing", "scheduling", "Microsoft Excel"
+    ],
+    "ios-developer": [
+      "Swift", "SwiftUI", "HealthKit", "Core Data", "unit testing", "XCTest", "Fastlane", "UIKit", "Objective-C",
+      "REST API", "Xcode", "Git"
+    ],
+    "android-developer": [
+      "Android", "Kotlin", "Java", "Jetpack Compose", "Room", "REST API", "unit testing", "JUnit", "Espresso",
+      "Firebase", "Git"
     ]
   },
   "pairs": [
@@ -80,6 +122,24 @@
     { "job": "registered-nurse", "resume": "registered-nurse", "fit": "good" },
     { "job": "registered-nurse", "resume": "medical-assistant", "fit": "potential" },
     { "job": "registered-nurse", "resume": "data-analyst", "fit": "no" },
-    { "job": "registered-nurse", "resume": "bootcamp-frontend", "fit": "no" }
+    { "job": "registered-nurse", "resume": "bootcamp-frontend", "fit": "no" },
+
+    { "job": "devops-engineer", "resume": "devops-engineer", "fit": "good" },
+    { "job": "devops-engineer", "resume": "sysadmin", "fit": "potential" },
+    { "job": "devops-engineer", "resume": "java-backend", "fit": "potential" },
+    { "job": "devops-engineer", "resume": "data-analyst", "fit": "no" },
+    { "job": "devops-engineer", "resume": "medical-assistant", "fit": "no" },
+
+    { "job": "staff-accountant", "resume": "staff-accountant", "fit": "good" },
+    { "job": "staff-accountant", "resume": "bookkeeper", "fit": "potential" },
+    { "job": "staff-accountant", "resume": "data-analyst", "fit": "no" },
+    { "job": "staff-accountant", "resume": "sysadmin", "fit": "no" },
+    { "job": "staff-accountant", "resume": "registered-nurse", "fit": "no" },
+
+    { "job": "ios-developer", "resume": "ios-developer", "fit": "good" },
+    { "job": "ios-developer", "resume": "android-developer", "fit": "potential" },
+    { "job": "ios-developer", "resume": "java-backend", "fit": "no" },
+    { "job": "ios-developer", "resume": "data-scientist", "fit": "no" },
+    { "job": "ios-developer", "resume": "bootcamp-frontend", "fit": "no" }
   ]
 }

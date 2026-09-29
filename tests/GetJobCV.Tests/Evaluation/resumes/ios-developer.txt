@@ -1,0 +1,23 @@
+Kevin Tran
+Minneapolis, MN · kevin.tran@example.com
+github.com/kevintran
+
+SUMMARY
+iOS developer with 5 years shipping consumer apps in Swift.
+
+EXPERIENCE
+iOS Developer | Gopher Fitness | Minneapolis, MN  Feb 2022 - Present
+- Rebuilt the workout tracker in SwiftUI; crash-free sessions rose to 99.8%
+- Added HealthKit sync and offline storage with Core Data
+- Write unit tests with XCTest and run builds in Fastlane
+
+Mobile Developer | North Loop Media | Minneapolis, MN  Jun 2020 - Jan 2022
+- Built news app screens in UIKit and Objective-C
+- Integrated REST APIs and push notifications
+- Released biweekly updates to the App Store
+
+EDUCATION
+B.S. Computer Science, University of Minnesota  2016 - 2020
+
+SKILLS
+Swift, SwiftUI, UIKit, Objective-C, Core Data, HealthKit, XCTest, Xcode, Fastlane, Git
