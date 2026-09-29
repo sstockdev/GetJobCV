@@ -34,6 +34,23 @@
     "ios-developer": [
       "Swift", "SwiftUI", "UIKit", "REST API", "unit testing", "XCTest", "iOS", "Core Data", "Git",
       "Objective-C", "HealthKit", "CI/CD", "Fastlane"
+    ],
+    "account-executive": [
+      "prospecting", "cold calling", "LinkedIn", "Salesforce", "pipeline management", "forecasting",
+      "negotiation", "closing", "relationship building", "B2B sales", "outside sales", "CRM", "presentation",
+      "communication", "time management", "consultative selling", "solution selling"
+    ],
+    "journeyman-electrician": [
+      "blueprint reading", "conduit bending", "EMT", "rigid conduit", "wire pulling", "switchgear",
+      "troubleshooting", "multimeter", "motor controls", "three-phase", "lockout/tagout",
+      "Journeyman Electrician license", "National Electrical Code", "OSHA 10", "hand tools", "OSHA 30",
+      "fire alarm systems", "low voltage", "PLC"
+    ],
+    "math-teacher": [
+      "algebra", "geometry", "lesson planning", "differentiated instruction", "formative assessment",
+      "summative assessment", "classroom management", "IEP", "504 plans", "parent communication",
+      "Google Classroom", "Infinite Campus", "teaching license", "communication", "collaboration",
+      "AP Calculus", "AP Statistics", "PBIS"
     ]
   },
   "resumes": {
@@ -99,6 +116,34 @@
     "android-developer": [
       "Android", "Kotlin", "Java", "Jetpack Compose", "Room", "REST API", "unit testing", "JUnit", "Espresso",
       "Firebase", "Git"
+    ],
+    "account-executive": [
+      "account management", "cold calling", "prospecting", "Salesforce", "pipeline management", "forecasting",
+      "negotiation", "upselling", "cross-selling", "order entry", "HubSpot", "B2B sales", "consultative selling",
+      "presentation", "Microsoft Excel"
+    ],
+    "sales-development-rep": [
+      "cold calling", "prospecting", "LinkedIn Sales Navigator", "Salesforce", "lead generation", "Outreach",
+      "upselling", "customer service", "communication"
+    ],
+    "journeyman-electrician": [
+      "switchgear", "conduit bending", "EMT", "rigid conduit", "PVC conduit", "variable frequency drives",
+      "motor controls", "three-phase", "troubleshooting", "blueprint reading", "one-line diagrams", "wire pulling",
+      "fire alarm systems", "data cabling", "Journeyman Electrician license", "OSHA 30", "NFPA 70E", "first aid",
+      "CPR", "National Electrical Code", "lockout/tagout"
+    ],
+    "maintenance-technician": [
+      "troubleshooting", "electrical troubleshooting", "mechanical troubleshooting", "hydraulics", "multimeter",
+      "megger", "Allen-Bradley", "PLC", "preventive maintenance", "SAP", "lockout/tagout", "OSHA 10", "forklift",
+      "pneumatics", "welding", "blueprint reading"
+    ],
+    "math-teacher": [
+      "algebra", "geometry", "AP Calculus", "formative assessment", "differentiated instruction", "IEP",
+      "Google Classroom", "lesson planning", "classroom management", "curriculum development", "PBIS", "Desmos",
+      "Infinite Campus", "teaching license"
+    ],
+    "math-tutor": [
+      "tutoring", "algebra", "calculus", "statistics", "Desmos", "Microsoft Excel", "patience", "communication"
     ]
   },
   "pairs": [
@@ -140,6 +185,24 @@
     { "job": "ios-developer", "resume": "android-developer", "fit": "potential" },
     { "job": "ios-developer", "resume": "java-backend", "fit": "no" },
     { "job": "ios-developer", "resume": "data-scientist", "fit": "no" },
-    { "job": "ios-developer", "resume": "bootcamp-frontend", "fit": "no" }
+    { "job": "ios-developer", "resume": "bootcamp-frontend", "fit": "no" },
+
+    { "job": "account-executive", "resume": "account-executive", "fit": "good" },
+    { "job": "account-executive", "resume": "sales-development-rep", "fit": "potential" },
+    { "job": "account-executive", "resume": "bookkeeper", "fit": "no" },
+    { "job": "account-executive", "resume": "maintenance-technician", "fit": "no" },
+    { "job": "account-executive", "resume": "math-tutor", "fit": "no" },
+
+    { "job": "journeyman-electrician", "resume": "journeyman-electrician", "fit": "good" },
+    { "job": "journeyman-electrician", "resume": "maintenance-technician", "fit": "potential" },
+    { "job": "journeyman-electrician", "resume": "sysadmin", "fit": "no" },
+    { "job": "journeyman-electrician", "resume": "account-executive", "fit": "no" },
+    { "job": "journeyman-electrician", "resume": "registered-nurse", "fit": "no" },
+
+    { "job": "math-teacher", "resume": "math-teacher", "fit": "good" },
+    { "job": "math-teacher", "resume": "math-tutor", "fit": "potential" },
+    { "job": "math-teacher", "resume": "data-scientist", "fit": "no" },
+    { "job": "math-teacher", "resume": "journeyman-electrician", "fit": "no" },
+    { "job": "math-teacher", "resume": "sales-development-rep", "fit": "no" }
   ]
 }

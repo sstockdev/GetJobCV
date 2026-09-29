@@ -69,8 +69,8 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 - [x] Hand-labeled test set of resume/job pairs (fit or no fit, expected skills), run through the whole pipeline (`tests/GetJobCV.Tests/Evaluation`)
 - [x] Precision, recall, and F1 for skill extraction; within-job concordance, AUC, and NDCG for fit ranking, with floors that fail on a regression
 - [x] Opt-in benchmark on the public resume/job fit dataset (not bundled: no license)
-- [x] Grow the gold set to 7 jobs and 15 resumes: DevOps, accounting, and iOS next to tech and nursing
-- [ ] Keep growing it with fields the gazetteer hasn't been tuned on (sales, trades, education)
+- [x] Grow the gold set to 10 jobs and 21 resumes: DevOps, accounting, iOS, sales, electrical, and teaching next to tech and nursing
+- [ ] Keep growing it with fields the gazetteer hasn't been tuned on
 - [ ] Accuracy for classification and shortlisting, once those exist
 - [ ] Unit tests for each module
 
