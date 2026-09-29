@@ -45,7 +45,11 @@ namespace GetJobCV.Modules
         /// through NER; each skill in it takes the nearest years phrase. A years phrase with
         /// no skill is an overall requirement if the clause mentions experience.
         /// </summary>
-        public static JobRequirements Extract(string jobDescription, NerExtractor ner)
+        public static JobRequirements Extract(string jobDescription, NerExtractor ner) =>
+            Extract(jobDescription, clause => ner.Extract(clause).Skills);
+
+        /// <param name="findSkills">Skills in one clause; NER in the app, a stub in tests</param>
+        public static JobRequirements Extract(string jobDescription, Func<string, IEnumerable<string>> findSkills)
         {
             List<YearsRequirement> all = [];
 
@@ -56,9 +60,9 @@ namespace GetJobCV.Modules
                     continue;
 
                 HashSet<Match> claimed = [];
-                foreach (string skill in ner.Extract(clause).Skills)
+                foreach (string skill in findSkills(clause))
                 {
-                    int at = clause.IndexOf(skill, StringComparison.OrdinalIgnoreCase);
+                    int at = WholeWordIndex(clause, skill);
                     if (at < 0)
                         continue;
 
@@ -90,6 +94,18 @@ namespace GetJobCV.Modules
             : m.Index >= start + length ? m.Index - (start + length)
             : 0;
 
+        /// <summary>
+        /// Where <paramref name="skill"/> appears as a whole word, so "C" isn't found
+        /// inside "Backend" or "C#". -1 if it doesn't.
+        /// </summary>
+        private static int WholeWordIndex(string clause, string skill)
+        {
+            Match m = Regex.Match(clause,
+                @"(?<![\p{L}\p{N}])" + Regex.Escape(skill) + @"(?![\p{L}\p{N}#+])",
+                RegexOptions.IgnoreCase);
+            return m.Success ? m.Index : -1;
+        }
+
         private static int ParseYears(Match m)
         {
             string n = m.Groups["n"].Value;
@@ -99,9 +115,10 @@ namespace GetJobCV.Modules
         // Generate regex at compile time
 
         /// <summary>
-        /// Splits on lines, bullets, semicolons, and sentence ends.
+        /// Splits on lines, bullets, semicolons, and sentence ends. A sentence can start
+        /// with a number ("…experience. 3+ years of C#").
         /// </summary>
-        [GeneratedRegex(@"\r?\n|[;•]|(?<=[.!?])\s+(?=[A-Z])")]
+        [GeneratedRegex(@"\r?\n|[;•]|(?<=[.!?])\s+(?=[A-Z0-9])")]
         private static partial Regex ClauseRegex();
 
         /// <summary>

@@ -77,7 +77,7 @@ namespace GetJobCV.Modules
             if (string.IsNullOrWhiteSpace(rawText))
                 return NerResult.Empty;
 
-            Document doc = new(SplitSlashedSkills(rawText), Language.English);
+            Document doc = new(DetachTrailingPunctuation(SplitSlashedSkills(rawText)), Language.English);
             _pipeline.ProcessSingle(doc);
 
             HashSet<string> people = new(StringComparer.OrdinalIgnoreCase);
@@ -121,6 +121,17 @@ namespace GetJobCV.Modules
             });
 
         private bool IsSkill(string text) => _skills.Contains(text) || _exactSkills.Contains(text);
+
+        /// <summary>
+        /// Catalyst splits "C#." at the end of a sentence into "C" and "#.", so the spotter
+        /// finds C instead of C#. Space off punctuation that follows a '#' or '+' at the end
+        /// of a word ("C#." → "C# .", "C++," → "C++ ,").
+        /// </summary>
+        private static string DetachTrailingPunctuation(string text) =>
+            TrailingPunctuationRegex().Replace(text, " $0");
+
+        [GeneratedRegex(@"(?<=[#+])[.,;:!?)]+(?=\s|$)")]
+        private static partial Regex TrailingPunctuationRegex();
 
         /// <summary>
         /// A whitespace-delimited token with slashes between non-empty parts.

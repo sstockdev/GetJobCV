@@ -30,5 +30,6 @@
 
   <ItemGroup>
 	  <Compile Remove="tools/**/*.cs" />
+	  <Compile Remove="tests/**/*.cs" />
   </ItemGroup>
 </Project>
