@@ -611,6 +611,30 @@ object oriented programming	Object-Oriented Programming
 Salesforce software	Salesforce
 Salesforce.com Salesforce CRM	Salesforce
 
+# Verb forms of concept skills ("communicate effectively" asks for Communication).
+# Plurals and hyphenated forms of multi-word skills ("code reviews") are generated.
+communicate	communication
+communicates	communication
+communicated	communication
+communicating	communication
+collaborate	collaboration
+collaborates	collaboration
+collaborated	collaboration
+collaborating	collaboration
+troubleshoot	Troubleshooting
+troubleshoots	Troubleshooting
+troubleshot	Troubleshooting
+troubleshooted	Troubleshooting
+debug	debugging
+debugs	debugging
+debugged	debugging
+documented	documentation
+documenting	documentation
+refactor	refactoring
+refactored	refactoring
+mentor	mentoring
+mentored	mentoring
+
 # --- Hierarchy: Specific > General ---
 # A resume that shows the specific skill also covers the general one when the job asks
 # for it ("PostgreSQL" covers "SQL"), at the same evidence. Not the other way around.

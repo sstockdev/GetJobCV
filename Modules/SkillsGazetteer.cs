@@ -26,6 +26,8 @@ namespace GetJobCV.Modules
                 if (seen.Add(e.Name)) names.Add(e.Name);
             foreach (string n in LoadOverlay(overlayPath))
                 if (!n.StartsWith(CaseSensitivePrefix) && seen.Add(n)) names.Add(n);
+            foreach (string form in WordForms(overlayPath).Keys)
+                if (seen.Add(form)) names.Add(form);
             return names;
         }
 
@@ -64,11 +66,12 @@ namespace GetJobCV.Modules
 
         /// <summary>
         /// Overlay "alias&lt;TAB&gt;Canonical" lines: alias (without any '=' prefix) to the
-        /// name it's reported as. Case-insensitive keys. Aliases don't chain.
+        /// name it's reported as, plus the <see cref="WordForms"/> of multi-word skills.
+        /// Case-insensitive keys. Aliases don't chain.
         /// </summary>
         public static IReadOnlyDictionary<string, string> LoadAliases(string overlayPath = OverlayPath)
         {
-            Dictionary<string, string> aliases = new(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> aliases = WordForms(overlayPath);
             if (!File.Exists(overlayPath)) return aliases;
             foreach (string line in ReadDataLines(overlayPath).Where(l => !IsHierarchyLine(l)))
             {
@@ -120,6 +123,52 @@ namespace GetJobCV.Modules
                 closed[skill] = all;
             }
             return closed;
+        }
+
+        /// <summary>
+        /// Plural and hyphenated forms of the overlay's multi-word skills, to the skill
+        /// ("code reviews", "code-review" for "code review"). Only for skills made of plain
+        /// words: tech names ("next.js") and one-word skills that are also ordinary words
+        /// ("spring", "express") get none. A form that's a skill of its own is left alone.
+        /// </summary>
+        private static Dictionary<string, string> WordForms(string overlayPath)
+        {
+            Dictionary<string, string> forms = new(StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(overlayPath)) return forms;
+
+            List<string> skills = [.. ReadDataLines(overlayPath)
+                .Where(l => !IsHierarchyLine(l) && !l.Contains('\t') && !l.StartsWith(CaseSensitivePrefix))];
+            HashSet<string> taken = new(skills, StringComparer.OrdinalIgnoreCase);
+
+            foreach (string skill in skills)
+            {
+                string[] words = skill.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (words.Length < 2 || !words.All(w => w.All(char.IsLetter))) continue;
+
+                List<string> variants = [string.Join('-', words)];
+                if (Plural(words[^1]) is { } plural)
+                {
+                    string[] head = words[..^1];
+                    variants.Add(string.Join(' ', [.. head, plural]));
+                    variants.Add(string.Join('-', [.. head, plural]));
+                }
+                foreach (string variant in variants.Where(v => !taken.Contains(v)))
+                    forms.TryAdd(variant, skill);
+            }
+            return forms;
+        }
+
+        /// <summary>
+        /// A noun's plural, or null when it already ends in s ("systems", "bus").
+        /// </summary>
+        private static string? Plural(string word)
+        {
+            if (word.EndsWith('s')) return null;
+            if (word.EndsWith('x') || word.EndsWith('z') || word.EndsWith("ch") || word.EndsWith("sh"))
+                return word + "es";
+            if (word.Length > 1 && word[^1] == 'y' && !"aeiou".Contains(word[^2]))
+                return word[..^1] + "ies";
+            return word + "s";
         }
 
         private static IEnumerable<string> ReadDataLines(string path) =>
