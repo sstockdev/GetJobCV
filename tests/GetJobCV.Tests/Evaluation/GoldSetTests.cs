@@ -53,9 +53,6 @@ namespace GetJobCV.Tests
             Dictionary<string, string> resumeText = labels.Resumes.Keys.ToDictionary(
                 id => id, id => File.ReadAllText(Path.Combine(dir, "resumes", id + ".txt")));
 
-            IReadOnlyDictionary<string, int> tiers = SkillsGazetteer.LoadWeights();
-            IReadOnlyDictionary<string, IReadOnlySet<string>> parents = SkillsGazetteer.LoadParents();
-
             // What the app sees: the job description the way it runs NER on it
             FoundJobSkills = jobText.ToDictionary(j => j.Key, j => Normalize(ner.Extract(j.Value).Skills));
 
@@ -63,13 +60,10 @@ namespace GetJobCV.Tests
             List<Pair> pairs = [];
             foreach (LabeledPair p in labels.Pairs)
             {
-                Analyzer.AnalysisResult result = Analyzer.Analyze(
-                    resumeText[p.Resume], [], jobText[p.Job], ner, tiers, parents, Today);
-                ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(result.Score, result.Skills.WeightCoverage);
-
+                var (pair, result) = Score(p.Job, p.Resume, Enum.Parse<Fit>(p.Fit, ignoreCase: true),
+                    jobText[p.Job], resumeText[p.Resume], ner);
                 foundResume[p.Resume] = Normalize(result.Ner.Skills);
-                pairs.Add(new Pair(p.Job, p.Resume, Enum.Parse<Fit>(p.Fit, ignoreCase: true),
-                    result.Score, result.Skills.WeightCoverage, combined.Overall, combined.Verdict));
+                pairs.Add(pair);
             }
             FoundResumeSkills = foundResume;
             Pairs = pairs;
@@ -80,15 +74,29 @@ namespace GetJobCV.Tests
                 .SelectMany(s => s).Where(s => !known.Contains(s)).Distinct().Order()];
         }
 
+        // Lazy: the gazetteer paths are relative to the directory NerFixture sets
+        private static readonly Lazy<IReadOnlyDictionary<string, int>> Tiers = new(() => SkillsGazetteer.LoadWeights());
+        private static readonly Lazy<IReadOnlyDictionary<string, IReadOnlySet<string>>> Parents = new(() => SkillsGazetteer.LoadParents());
+
+        /// <summary>
+        /// Runs one resume against one job the way the app does. The benchmark scores with this too.
+        /// </summary>
+        public static (Pair Pair, Analyzer.AnalysisResult Result) Score(
+            string job, string resume, Fit fit, string jobText, string resumeText, NerExtractor ner)
+        {
+            Analyzer.AnalysisResult result = Analyzer.Analyze(
+                resumeText, [], jobText, ner, Tiers.Value, Parents.Value, Today);
+            ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(result.Score, result.Skills.WeightCoverage);
+            return (new Pair(job, resume, fit, result.Score, result.Skills.WeightCoverage, combined.Overall, combined.Verdict), result);
+        }
+
         /// <summary>
         /// Maps a skill name to one key, so an alias in the labels ("ASP.NET Core")
         /// matches the canonical name NER reports ("ASP.NET").
         /// </summary>
         private static Func<string, string> Canonicalizer()
         {
-            Dictionary<string, string> aliases = new(StringComparer.OrdinalIgnoreCase);
-            foreach (var (alias, name) in SkillsGazetteer.LoadAliases())
-                aliases.TryAdd(alias, name);
+            IReadOnlyDictionary<string, string> aliases = SkillsGazetteer.LoadAliases();
             return name => (aliases.TryGetValue(name, out string? c) ? c : name).ToLowerInvariant();
         }
     }
@@ -140,11 +148,7 @@ namespace GetJobCV.Tests
         [Fact]
         public void Fit_ranking()
         {
-            double concordance = EvalMetrics.Concordance(gold.Pairs.Select(p => (p.Job, p.Fit, p.Overall)));
-            double auc = EvalMetrics.Auc(
-                gold.Pairs.Where(p => p.Fit == Fit.Good).Select(p => p.Overall),
-                gold.Pairs.Where(p => p.Fit == Fit.No).Select(p => p.Overall));
-            double ndcg = gold.Pairs.GroupBy(p => p.Job).Average(g => EvalMetrics.Ndcg(g.Select(p => (p.Fit, p.Overall))));
+            var (concordance, auc, ndcg) = Rank(p => p.Overall);
             int verdictsRight = gold.Pairs.Count(p => VerdictFit(p.Verdict) == p.Fit);
 
             output.WriteLine($"{"Job",-18} {"Resume",-18} {"Label",-10} {"Cosine",7} {"Coverage",9} {"Overall",8}  Verdict");
@@ -153,7 +157,7 @@ namespace GetJobCV.Tests
             output.WriteLine("");
             foreach (var f in gold.Pairs.GroupBy(p => p.Fit).OrderByDescending(g => g.Key))
                 output.WriteLine($"Mean overall, {f.Key}: {f.Average(p => p.Overall):P0}");
-            output.WriteLine($"Within-job concordance: {concordance:P1} (cosine alone {Concordance(p => p.Cosine):P1}, coverage alone {Concordance(p => p.Coverage):P1})");
+            output.WriteLine($"Within-job concordance: {concordance:P1} (cosine alone {Rank(p => p.Cosine).Concordance:P1}, coverage alone {Rank(p => p.Coverage).Concordance:P1})");
             output.WriteLine($"Good vs No AUC: {auc:P1}");
             output.WriteLine($"Mean NDCG per job: {ndcg:P1}");
             output.WriteLine($"Verdict matches label: {verdictsRight}/{gold.Pairs.Count}");
@@ -164,8 +168,8 @@ namespace GetJobCV.Tests
             Assert.True(agreement >= VerdictAgreementFloor, $"Verdict agreement {agreement:P1} fell below {VerdictAgreementFloor:P1}");
         }
 
-        private double Concordance(Func<GoldSetFixture.Pair, double> score) =>
-            EvalMetrics.Concordance(gold.Pairs.Select(p => (p.Job, p.Fit, score(p))));
+        private Ranking Rank(Func<GoldSetFixture.Pair, double> score) =>
+            EvalMetrics.Rank(gold.Pairs.Select(p => (p.Job, p.Fit, score(p))));
 
         /// <summary>
         /// The label a verdict claims. "Needs improvement!" and "Awful" both say no fit.

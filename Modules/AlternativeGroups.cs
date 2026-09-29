@@ -21,7 +21,7 @@ namespace GetJobCV.Modules
     public static partial class AlternativeGroups
     {
         public static IReadOnlyList<IReadOnlySet<string>> Find(string jobDescription, NerExtractor ner) =>
-            Find(jobDescription, clause => ner.Extract(clause).SkillMentions ?? []);
+            Find(jobDescription, ner.ExtractSkills);
 
         /// <param name="findSkills">Skills in a clause, written as named; a stub in tests</param>
         public static IReadOnlyList<IReadOnlySet<string>> Find(

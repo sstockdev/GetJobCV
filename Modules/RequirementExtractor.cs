@@ -46,7 +46,7 @@ namespace GetJobCV.Modules
         /// no skill is an overall requirement if the clause mentions experience.
         /// </summary>
         public static JobRequirements Extract(string jobDescription, NerExtractor ner) =>
-            Extract(jobDescription, clause => ner.Extract(clause).SkillMentions ?? []);
+            Extract(jobDescription, ner.ExtractSkills);
 
         /// <param name="findSkills">Skills in one clause, written as named; a stub in tests</param>
         public static JobRequirements Extract(string jobDescription, Func<string, IEnumerable<string>> findSkills) =>

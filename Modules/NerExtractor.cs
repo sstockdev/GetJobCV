@@ -97,44 +97,61 @@ namespace GetJobCV.Modules
             if (string.IsNullOrWhiteSpace(rawText))
                 return NerResult.Empty;
 
-            string text = DetachTrailingPunctuation(SplitSlashedSkills(rawText));
-            Document names = new(text, Language.English);
-            Document skillDoc = new(text, Language.English);
-            _namePipeline.ProcessSingle(names);
-            _skillPipeline.ProcessSingle(skillDoc);
+            string text = Prepare(rawText);
+            Document doc = new(text, Language.English);
+            _namePipeline.ProcessSingle(doc);
 
             HashSet<string> people = new(StringComparer.OrdinalIgnoreCase);
             HashSet<string> orgs = new(StringComparer.OrdinalIgnoreCase);
             HashSet<string> locations = new(StringComparer.OrdinalIgnoreCase);
-            HashSet<string> skills = new(StringComparer.OrdinalIgnoreCase);
-            HashSet<string> written = new(StringComparer.OrdinalIgnoreCase);
-            List<SkillMention> mentions = [];
 
-            foreach (var e in names.Concat(skillDoc).SelectMany(span => span.GetEntities()))
+            // from WikiNER
+            foreach (var e in doc.SelectMany(span => span.GetEntities()))
             {
-                // from WikiNER
                 switch (e.EntityType.Type)
                 {
                     case "Person": people.Add(e.Value); break;
                     case "Organization": orgs.Add(e.Value); break;
                     case "Location": locations.Add(e.Value); break;
-                    case "Skill":
-                        string name = Canonical(e.Value);
-                        skills.Add(name);
-                        if (written.Add(e.Value))
-                            mentions.Add(new SkillMention(name, e.Value));
-                        break;
                 }
             }
+
+            List<SkillMention> mentions = SpotSkills(text);
+            string[] skills = [.. mentions.Select(m => m.Name).Distinct(StringComparer.OrdinalIgnoreCase)];
 
             // remove skills from people / orgs / locations, as written and as named
             foreach (HashSet<string> set in new[] { people, orgs, locations })
             {
                 set.ExceptWith(skills);
-                set.ExceptWith(written);
+                set.ExceptWith(mentions.Select(m => m.Text));
             }
 
-            return new NerResult([.. people], [.. orgs], [.. locations], [.. skills], mentions);
+            return new NerResult([.. people], [.. orgs], [.. locations], skills, mentions);
+        }
+
+        /// <summary>
+        /// Only the skills, without running WikiNER: for callers that don't need names.
+        /// </summary>
+        public IReadOnlyList<SkillMention> ExtractSkills(string rawText) =>
+            string.IsNullOrWhiteSpace(rawText) ? [] : SpotSkills(Prepare(rawText));
+
+        private string Prepare(string rawText) =>
+            DetachTrailingPunctuation(SplitSlashedSkills(rawText));
+
+        /// <summary>
+        /// Each skill once per way it's written, in order of first appearance.
+        /// </summary>
+        private List<SkillMention> SpotSkills(string text)
+        {
+            Document doc = new(text, Language.English);
+            _skillPipeline.ProcessSingle(doc);
+
+            HashSet<string> written = new(StringComparer.OrdinalIgnoreCase);
+            List<SkillMention> mentions = [];
+            foreach (var e in doc.SelectMany(span => span.GetEntities()))
+                if (e.EntityType.Type == "Skill" && written.Add(e.Value))
+                    mentions.Add(new SkillMention(Canonical(e.Value), e.Value));
+            return mentions;
         }
 
         /// <summary>

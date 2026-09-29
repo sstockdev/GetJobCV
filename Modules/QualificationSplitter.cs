@@ -17,7 +17,7 @@ namespace GetJobCV.Modules
         /// mentioned as required anywhere is required.
         /// </summary>
         public static IReadOnlySet<string> PreferredSkills(string jobDescription, NerExtractor ner) =>
-            PreferredSkills(jobDescription, clause => ner.Extract(clause).SkillMentions ?? []);
+            PreferredSkills(jobDescription, ner.ExtractSkills);
 
         /// <param name="findSkills">Skills in one clause, written as named; a stub in tests</param>
         public static IReadOnlySet<string> PreferredSkills(

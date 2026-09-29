@@ -1,5 +1,4 @@
 using System.Text;
-using GetJobCV.Modules;
 using GetJobCV.Tests.Evaluation;
 using Xunit.Abstractions;
 
@@ -17,8 +16,6 @@ namespace GetJobCV.Tests
     [Trait("Category", "Benchmark")]
     public class FitDatasetBenchmark(NerFixture fixture, ITestOutputHelper output) : IClassFixture<NerFixture>
     {
-        private sealed record Scored(string Job, Fit Fit, double Cosine, double Coverage, double Overall);
-
         [Fact]
         public void Resume_job_fit_dataset()
         {
@@ -30,33 +27,19 @@ namespace GetJobCV.Tests
             }
             int limit = int.TryParse(Environment.GetEnvironmentVariable("GETJOBCV_FIT_LIMIT"), out int n) ? n : int.MaxValue;
 
-            IReadOnlyDictionary<string, int> tiers = SkillsGazetteer.LoadWeights();
-            IReadOnlyDictionary<string, IReadOnlySet<string>> parents = SkillsGazetteer.LoadParents();
-
-            List<Scored> scored = [];
-            foreach (string[] row in ReadCsv(File.ReadAllText(path)).Skip(1).Take(limit))
-            {
-                (string resume, string job, string label) = (row[0], row[1], row[2]);
-                Analyzer.AnalysisResult result = Analyzer.Analyze(
-                    resume, [], job, fixture.Ner, tiers, parents, GoldSetFixture.Today);
-                double overall = ScoreCombiner.Combine(result.Score, result.Skills.WeightCoverage).Overall;
-                scored.Add(new Scored(job, ParseLabel(label), result.Score, result.Skills.WeightCoverage, overall));
-            }
+            // The job text is its own key, since the dataset has no ids
+            List<GoldSetFixture.Pair> scored = [.. ReadCsv(File.ReadAllText(path)).Skip(1).Take(limit).Select(row =>
+                GoldSetFixture.Score(row[1], "", ParseLabel(row[2]), row[1], row[0], fixture.Ner).Pair)];
 
             output.WriteLine($"{scored.Count} pairs over {scored.Select(s => s.Job).Distinct().Count()} job descriptions");
             foreach (var f in scored.GroupBy(s => s.Fit).OrderByDescending(g => g.Key))
                 output.WriteLine($"  {f.Key,-9} {f.Count(),5} pairs, mean overall {f.Average(s => s.Overall):P1}");
             output.WriteLine("");
             output.WriteLine($"{"Signal",-10} {"Concordance",12} {"Good/No AUC",12} {"NDCG",8}");
-            foreach (var (name, score) in new (string, Func<Scored, double>)[]
+            foreach (var (name, score) in new (string, Func<GoldSetFixture.Pair, double>)[]
                      { ("Cosine", s => s.Cosine), ("Coverage", s => s.Coverage), ("Overall", s => s.Overall) })
             {
-                double concordance = EvalMetrics.Concordance(scored.Select(s => (s.Job, s.Fit, score(s))));
-                double auc = EvalMetrics.Auc(
-                    scored.Where(s => s.Fit == Fit.Good).Select(score), scored.Where(s => s.Fit == Fit.No).Select(score));
-                double ndcg = scored.GroupBy(s => s.Job)
-                    .Select(g => EvalMetrics.Ndcg(g.Select(s => (s.Fit, score(s)))))
-                    .Where(v => !double.IsNaN(v)).Average();
+                var (concordance, auc, ndcg) = EvalMetrics.Rank(scored.Select(s => (s.Job, s.Fit, score(s))));
                 output.WriteLine($"{name,-10} {concordance,12:P1} {auc,12:P1} {ndcg,8:P1}");
             }
         }

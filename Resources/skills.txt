@@ -540,7 +540,6 @@ Group Policy
 Microsoft 365
 VMware vSphere
 Veeam
-Nagios
 PagerDuty
 VLAN
 CompTIA Security+

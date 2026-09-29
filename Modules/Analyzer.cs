@@ -67,6 +67,13 @@ namespace GetJobCV.Modules
                 return ner.Extract(text);
             }
 
+            // Roles only need their skills, so they skip WikiNER
+            IEnumerable<string> SkillsIn(string text)
+            {
+                cancel.ThrowIfCancellationRequested();
+                return ner.ExtractSkills(text).Select(m => m.Name).Distinct(StringComparer.OrdinalIgnoreCase);
+            }
+
             var sectionNer = sections.Select(s => (s.Type, Ner: Extract(s.Text))).ToList();
             NerResult resumeNer = NerResult.Merge(sectionNer.Select(s => s.Ner));
             NerResult jdNer = Extract(jobDescription);
@@ -75,7 +82,7 @@ namespace GetJobCV.Modules
             ExperienceSummary experience = ExperienceCalculator.Summarize(
                 record.Experience
                     .Where(role => role.Section == SectionType.Experience)
-                    .Select(role => (role, (IEnumerable<string>)Extract(role.Text).Skills)),
+                    .Select(role => (role, SkillsIn(role.Text))),
                 today);
 
             // "3+ years of Python" and "5+ years of experience" in the job description

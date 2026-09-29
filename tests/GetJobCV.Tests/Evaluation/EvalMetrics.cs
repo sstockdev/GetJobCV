@@ -20,8 +20,11 @@ namespace GetJobCV.Tests.Evaluation
         /// <summary>
         /// Compares one document's predicted set with its gold set.
         /// </summary>
-        public static SetScore Compare(IReadOnlySet<string> gold, IReadOnlySet<string> predicted) => new(
-            predicted.Count(gold.Contains), predicted.Count(p => !gold.Contains(p)), gold.Count(g => !predicted.Contains(g)));
+        public static SetScore Compare(IReadOnlySet<string> gold, IReadOnlySet<string> predicted)
+        {
+            int tp = predicted.Count(gold.Contains);
+            return new(tp, predicted.Count - tp, gold.Count - tp);
+        }
 
         // An empty denominator means nothing was asked of it, so it gets full marks
         private static double Ratio(int n, int d) => d == 0 ? 1 : (double)n / d;
@@ -29,11 +32,28 @@ namespace GetJobCV.Tests.Evaluation
         public override string ToString() => $"P {Precision:P0}  R {Recall:P0}  F1 {F1:P0}  (tp {TruePositives}, fp {FalsePositives}, fn {FalseNegatives})";
     }
 
+    /// <param name="Ndcg">Mean over groups, skipping groups where every item is No fit</param>
+    public readonly record struct Ranking(double Concordance, double Auc, double Ndcg);
+
     /// <summary>
     /// Ranking metrics over scored, labeled pairs.
     /// </summary>
     public static class EvalMetrics
     {
+        /// <summary>
+        /// Within-group concordance, Good vs No AUC, and mean NDCG per group.
+        /// </summary>
+        public static Ranking Rank<TGroup>(IEnumerable<(TGroup Group, Fit Fit, double Score)> items)
+        {
+            var list = items.ToList();
+            return new Ranking(
+                Concordance(list),
+                Auc(list.Where(i => i.Fit == Fit.Good).Select(i => i.Score), list.Where(i => i.Fit == Fit.No).Select(i => i.Score)),
+                list.GroupBy(i => i.Group)
+                    .Select(g => Ndcg(g.Select(i => (i.Fit, i.Score))))
+                    .Where(v => !double.IsNaN(v)).Average());
+        }
+
         /// <summary>
         /// Of every two items in the same group with different fits, the share where the
         /// better fit scored higher. A tie counts half. 0.5 is chance, 1 is perfect.
