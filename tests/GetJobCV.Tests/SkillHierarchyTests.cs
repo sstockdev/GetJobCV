@@ -103,7 +103,7 @@ namespace GetJobCV.Tests
 
             SkillMatcher.ScoredSkill sql = Assert.Single(report.Matched);
             Assert.Equal("SQL", sql.Name);
-            Assert.Equal("PostgreSQL", sql.ImpliedBy);
+            Assert.Equal(["PostgreSQL"], sql.ImpliedBy!);
             Assert.Equal(SkillMatcher.UsedEvidence, sql.Evidence);
             Assert.Empty(report.Missing);
             Assert.Equal(1.0, report.WeightCoverage);
@@ -134,7 +134,7 @@ namespace GetJobCV.Tests
             SkillMatcher.ScoredSkill used = Assert.Single(SkillMatcher.Match(
                 [("SQL", SectionType.Skills), ("PostgreSQL", SectionType.Experience)], ["SQL"], NoTiers, parents: Parents).Matched);
             Assert.Equal(SectionType.Experience, used.Section);
-            Assert.Equal("PostgreSQL", used.ImpliedBy);
+            Assert.Equal(["PostgreSQL"], used.ImpliedBy!);
 
             // By name wins a tie, so the report doesn't credit something else
             SkillMatcher.ScoredSkill named = Assert.Single(SkillMatcher.Match(
@@ -147,8 +147,29 @@ namespace GetJobCV.Tests
         {
             SkillMatcher.ScoredSkill sql = Assert.Single(SkillMatcher.Match(
                 [("MySQL", SectionType.Skills), ("PostgreSQL", SectionType.Projects)], ["SQL"], NoTiers, parents: Parents).Matched);
-            Assert.Equal("PostgreSQL", sql.ImpliedBy);
+            Assert.Equal(["PostgreSQL", "MySQL"], sql.ImpliedBy!);
             Assert.Equal(SectionType.Projects, sql.Section);
+        }
+
+        [Fact]
+        public void No_skill_that_covered_it_is_extra()
+        {
+            SkillMatcher.SkillReport report = SkillMatcher.Match(
+                [("MySQL", SectionType.Skills), ("PostgreSQL", SectionType.Skills), ("Docker", SectionType.Skills)],
+                ["SQL"], NoTiers, parents: Parents);
+
+            Assert.Equal(["MySQL", "PostgreSQL"], Assert.Single(report.Matched).ImpliedBy!);
+            Assert.Equal(["Docker"], report.Extra.Select(s => s.Name));
+        }
+
+        [Fact]
+        public void Skills_that_imply_a_skill_matched_by_name_are_still_extra()
+        {
+            SkillMatcher.SkillReport report = SkillMatcher.Match(
+                [("SQL", SectionType.Experience), ("PostgreSQL", SectionType.Skills)], ["SQL"], NoTiers, parents: Parents);
+
+            Assert.Null(Assert.Single(report.Matched).ImpliedBy);
+            Assert.Equal(["PostgreSQL"], report.Extra.Select(s => s.Name));
         }
 
         [Fact]
@@ -184,6 +205,16 @@ namespace GetJobCV.Tests
 
             Assert.Equal("only in the Skills list, counts half, through PostgreSQL", ReportText.Evidence(sql));
             Assert.Equal("via PostgreSQL, skills list", ReportText.Tag(sql));
+        }
+
+        [Fact]
+        public void The_report_names_every_skill_that_covered_it()
+        {
+            SkillMatcher.ScoredSkill sql = Assert.Single(SkillMatcher.Match(
+                [("PostgreSQL", SectionType.Skills), ("MySQL", SectionType.Skills)], ["SQL"], NoTiers, parents: Parents).Matched);
+
+            Assert.Equal("only in the Skills list, counts half, through MySQL, PostgreSQL", ReportText.Evidence(sql));
+            Assert.Equal("via MySQL +1, skills list", ReportText.Tag(sql));
         }
     }
 }

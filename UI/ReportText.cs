@@ -55,7 +55,7 @@ namespace GetJobCV.UI
 
         /// <summary>
         /// Where the resume shows the skill and what that's worth, and the more specific
-        /// skill that showed it ("shown in use in Experience, through PostgreSQL").
+        /// skills that showed it ("shown in use in Experience, through PostgreSQL, MySQL").
         /// </summary>
         public static string Evidence(SkillMatcher.ScoredSkill skill) => skill.Section switch
         {
@@ -63,7 +63,7 @@ namespace GetJobCV.UI
             SectionType.Skills => "only in the Skills list, counts half",
             SectionType s when skill.Evidence < SkillMatcher.UsedEvidence => $"mentioned in {s}, counts {skill.Evidence:P0}",
             SectionType s => $"shown in use in {s}",
-        } + (skill.ImpliedBy is { } via ? $", through {DisplayName(via)}" : "");
+        } + (skill.ImpliedBy is { Count: > 0 } via ? $", through {string.Join(", ", via.Select(DisplayName))}" : "");
 
         /// <summary>
         /// "job asks for 3+ years, resume shows 1.7", or null without a years requirement.
@@ -116,8 +116,12 @@ namespace GetJobCV.UI
                 SectionType s when skill.Evidence < SkillMatcher.UsedEvidence => s.ToString().ToLowerInvariant(),
                 _ => null,
             };
-            if (skill.ImpliedBy is { } via)
-                where = where is null ? $"via {DisplayName(via)}" : $"via {DisplayName(via)}, {where}";
+            // Only the skill whose section counts; the rest are in the evidence text
+            if (skill.ImpliedBy is { Count: > 0 } via)
+            {
+                string by = via.Count > 1 ? $"via {DisplayName(via[0])} +{via.Count - 1}" : $"via {DisplayName(via[0])}";
+                where = where is null ? by : $"{by}, {where}";
+            }
             return where is null ? years : years is null ? where : $"{where} · {years}";
         }
 
