@@ -103,7 +103,7 @@ namespace GetJobCV
                 ResultLabel.Text = $"Overall: {overallPct:F0}% - {combined.Verdict}";
 
                 DebugTextBox.Text =
-                   $"GitHub: {result.Socials.GitHub}\r\nLinkedIn: {result.Socials.LinkedIn}\r\n\r\n" +
+                   FormatRecord(result.Record) +
                    $"Sections: {FormatSections(result.Sections)}\r\n\r\n" +
                    $"People: {string.Join(", ", result.Ner.People)}\r\n" +
                    $"Orgs: {string.Join(", ", result.Ner.Organizations)}\r\n" +
@@ -131,6 +131,7 @@ namespace GetJobCV
         private sealed record AnalysisResult(
             Socials Socials,
             IReadOnlyList<ResumeSection> Sections,
+            ResumeRecord Record,
             NerResult Ner,
             double Score,
             SkillMatcher.SkillReport Skills);
@@ -176,6 +177,10 @@ namespace GetJobCV
             status.Report("Finding Sections");
             IReadOnlyList<ResumeSection> sections = SectionSegmenter.Segment(resumeText);
 
+            // Pull out contact details, schools, and roles
+            status.Report("Parsing Resume");
+            ResumeRecord record = ResumeParser.Parse(sections, socials);
+
             // Run NER per section so each skill is known with where it appears
             status.Report("Running Named Entity Recognition");
             var sectionNer = sections.Select(s => (s.Type, Ner: ner.Extract(s.Text))).ToList();
@@ -205,7 +210,31 @@ namespace GetJobCV
             SkillMatcher.SkillReport skillReport =
                 SkillMatcher.Match(resumeSkills, jdNer.Skills, skillTiers);
 
-            return new AnalysisResult(socials, sections, resumeNer, score, skillReport);
+            return new AnalysisResult(socials, sections, record, resumeNer, score, skillReport);
+        }
+
+        private static string FormatRecord(ResumeRecord record)
+        {
+            StringBuilder sb = new();
+            ContactInfo c = record.Contact;
+            sb.Append($"Name: {c.Name}\r\nEmail: {c.Email}\r\nPhone: {c.Phone}\r\n");
+            sb.Append($"GitHub: {c.GitHub}\r\nLinkedIn: {c.LinkedIn}\r\n\r\n");
+
+            sb.Append("Education:\r\n");
+            foreach (EducationEntry e in record.Education)
+                sb.Append($"  {e.Degree} - {e.School}" +
+                    (e.Location is null ? "" : $" ({e.Location})") +
+                    (e.Dates is null ? "" : $", {e.Dates.Text}") +
+                    (e.Gpa is null ? "" : $", GPA {e.Gpa}") + "\r\n");
+
+            sb.Append("Experience:\r\n");
+            foreach (ExperienceEntry x in record.Experience)
+                sb.Append($"  {x.Title} @ {x.Organization}" +
+                    (x.Location is null ? "" : $" ({x.Location})") +
+                    $", {x.Dates.Text}" +
+                    (x.Section == SectionType.Experience ? "" : $" [{x.Section}]") + "\r\n");
+
+            return sb.Append("\r\n").ToString();
         }
 
         private static string FormatSections(IReadOnlyList<ResumeSection> sections)
