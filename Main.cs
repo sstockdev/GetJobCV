@@ -1,5 +1,6 @@
 using System.Text;
 using GetJobCV.Modules;
+using GetJobCV.UI;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Actions;
 using UglyToad.PdfPig.Annotations;
@@ -17,10 +18,48 @@ namespace GetJobCV
         // O*NET skill name to demand tier conversion
         private IReadOnlyDictionary<string, int> _skillTiers = new Dictionary<string, int>();
 
+        private readonly AppHeader _header = new();
+        private readonly StartView _start = new();
+        private readonly AnalyzingView _analyzing = new();
+        private readonly ResultsView _results = new();
+
+        // Where to go back to if a run fails
+        private Control _inputs;
+
         public Main()
         {
             InitializeComponent();
+            BackColor = Theme.Background;
+            Font = Theme.Body(9.75f);
+
+            Panel content = new() { Dock = DockStyle.Fill };
+            content.Controls.AddRange([_start, _analyzing, _results]);
+            Controls.Add(content);
+            Controls.Add(_header);
+            _inputs = _start;
+            ShowView(_start);
+
+            _start.AnalyzeRequested += (_, _) => RunAnalysis(_start.ResumePath, _start.JobDescription, _start);
+            _results.RerunRequested += (_, _) => RunAnalysis(_results.ResumePath, _results.JobDescription, _results);
+            _header.NewAnalysis.Click += (_, _) =>
+            {
+                _start.ResumePath = null;
+                _start.JobDescription = "";
+                ShowView(_start);
+            };
+
+            // A PDF dropped anywhere on the inputs becomes the resume
+            Theme.AcceptPdfDrops(_start, path => _start.ResumePath = path);
+            Theme.AcceptPdfDrops(_results, path => _results.ResumePath = path);
+
             Load += Main_Load;
+        }
+
+        private void ShowView(Control view)
+        {
+            foreach (Control v in new Control[] { _start, _analyzing, _results })
+                v.Visible = v == view;
+            _header.NewAnalysis.Visible = view == _results;
         }
 
         /// <summary>
@@ -29,55 +68,54 @@ namespace GetJobCV
         private async void Main_Load(object? sender, EventArgs e)
         {
             // Nothing to score with until the NER model is ready
-            SelectButton.Enabled = false;
-            StatusLabel.Text = "Loading NER model";
+            _header.Status.Show(Pill.Kind.Loading, "Loading NER model");
 
             try
             {
                 _skillTiers = SkillsGazetteer.LoadWeights();
                 _ner = await NerExtractor.CreateAsync(
                     SkillsGazetteer.Load(), SkillsGazetteer.LoadCaseSensitive());
-                StatusLabel.Text = "Ready";
-                SelectButton.Enabled = true;
+                _header.Status.Show(Pill.Kind.Ready, "Ready · models loaded");
+                _start.ModelReady = true;
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = $"Error: Couldn't load NER model ({ex.Message})";
+                _header.Status.Show(Pill.Kind.Error, $"Couldn't load NER model ({ex.Message})");
             }
         }
 
-        private async void SelectButton_Click(object sender, EventArgs e)
+        private async void RunAnalysis(string? filePath, string jobDescription, Control inputs)
         {
             if (_ner is null)
             {
-                StatusLabel.Text = "Error: NER model is still loading";
+                _header.Status.Show(Pill.Kind.Error, "The NER model is still loading");
                 return;
             }
-
-            if (String.IsNullOrWhiteSpace(JobDescriptionTextBox.Text))
+            if (filePath is null)
             {
-                StatusLabel.Text = "Error: Job description was empty";
+                _header.Status.Show(Pill.Kind.Error, "Add a resume first");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(jobDescription))
+            {
+                _header.Status.Show(Pill.Kind.Error, "The job description is empty");
                 return;
             }
 
-            using OpenFileDialog openFileDialog = new();
-            openFileDialog.InitialDirectory = "C:\\";
-            openFileDialog.Filter = "PDF files (*.pdf)|*.pdf|All files (*.*)|*.*";
-            openFileDialog.FilterIndex = 0;
-            openFileDialog.RestoreDirectory = true;
-
-            // User cancelled; not an error
-            if (openFileDialog.ShowDialog() != DialogResult.OK)
-                return;
-
-            string filePath = openFileDialog.FileName;
-            string jobDescription = JobDescriptionTextBox.Text;
             NerExtractor ner = _ner;
+            _inputs = inputs;
+            _analyzing.Start(filePath);
+            ShowView(_analyzing);
+            _header.Status.Show(Pill.Kind.Working, "Analyzing");
 
             // Progress<T> posts back to the UI thread so status updates actually paint
-            IProgress<string> status = new Progress<string>(s => StatusLabel.Text = s);
+            IProgress<string> status = new Progress<string>(s =>
+            {
+                int step = _analyzing.Report(s);
+                if (step > 0)
+                    _header.Status.Show(Pill.Kind.Working, $"Analyzing · step {step} of {AnalyzingView.StageCount}");
+            });
 
-            SelectButton.Enabled = false;
             try
             {
                 AnalysisResult? result = await Task.Run(() =>
@@ -85,45 +123,28 @@ namespace GetJobCV
 
                 if (result is null)
                 {
-                    StatusLabel.Text = "Error: Extracted text was null or invalid";
+                    Fail("No text could be extracted from the PDF");
                     return;
                 }
 
-                double matchPct = result.Score * 100.0;
-                double coveragePct = result.Skills.WeightCoverage * 100.0;
-
-                ScoreCombiner.CombinedScore combined =
-                    ScoreCombiner.Combine(result.Score, result.Skills.WeightCoverage);
-
-                double overallPct = combined.Overall * 100.0;
-
-                // Done
-                StatusLabel.Text = "Ready";
-
-                ResultLabel.Text = $"Overall: {overallPct:F0}% - {combined.Verdict}";
-
-                DebugTextBox.Text =
-                   FormatRecord(result.Record) +
-                   FormatExperience(result.Experience, result.Requirements, result.Skills.OverallYears) +
-                   $"Sections: {FormatSections(result.Sections)}\r\n\r\n" +
-                   $"People: {string.Join(", ", result.Ner.People)}\r\n" +
-                   $"Orgs: {string.Join(", ", result.Ner.Organizations)}\r\n" +
-                   $"Locations: {string.Join(", ", result.Ner.Locations)}\r\n\r\n" +
-                   $"Cosine match: {matchPct:F1}%\r\n" +
-                   $"Weighted skill coverage: {coveragePct:F0}%\r\n\r\n" +
-                   $"Matched ({result.Skills.Matched.Count}): {FormatSkills(result.Skills.Matched)}\r\n\r\n" +
-                   $"MISSING ({result.Skills.Missing.Count}): {FormatSkills(result.Skills.Missing)}\r\n\r\n" +
-                   $"Extra ({result.Skills.Extra.Count}): {FormatSkills(result.Skills.Extra)}\r\n\r\n" +
-                   $"Overall match: {overallPct:F0}% ({combined.Verdict})\r\n\r\n";
+                _results.ShowResult(filePath, jobDescription, result.Record, result.Experience,
+                    result.Sections, result.Skills, result.Score);
+                ShowView(_results);
+                _header.Status.Show(Pill.Kind.Ready, "Ready");
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = $"Error: Couldn't open PDF! ({ex.Message})";
+                Fail($"Couldn't read the PDF ({ex.Message})");
             }
-            finally
-            {
-                SelectButton.Enabled = true;
-            }
+        }
+
+        /// <summary>
+        /// Goes back to the screen the run started from, inputs intact.
+        /// </summary>
+        private void Fail(string message)
+        {
+            ShowView(_inputs);
+            _header.Status.Show(Pill.Kind.Error, message);
         }
 
         /// <summary>
@@ -233,87 +254,5 @@ namespace GetJobCV
             return new AnalysisResult(
                 socials, sections, record, experience, requirements, resumeNer, score, skillReport);
         }
-
-        private static string FormatRecord(ResumeRecord record)
-        {
-            StringBuilder sb = new();
-            ContactInfo c = record.Contact;
-            sb.Append($"Name: {c.Name}\r\nEmail: {c.Email}\r\nPhone: {c.Phone}\r\n");
-            sb.Append($"GitHub: {c.GitHub}\r\nLinkedIn: {c.LinkedIn}\r\n\r\n");
-
-            sb.Append("Education:\r\n");
-            foreach (EducationEntry e in record.Education)
-                sb.Append($"  {e.Degree} - {e.School}" +
-                    (e.Location is null ? "" : $" ({e.Location})") +
-                    (e.Dates is null ? "" : $", {e.Dates.Text}") +
-                    (e.Gpa is null ? "" : $", GPA {e.Gpa}") + "\r\n");
-
-            sb.Append("Experience:\r\n");
-            foreach (ExperienceEntry x in record.Experience)
-                sb.Append($"  {x.Title} @ {x.Organization}" +
-                    (x.Location is null ? "" : $" ({x.Location})") +
-                    $", {x.Dates.Text}" +
-                    (x.Section == SectionType.Experience ? "" : $" [{x.Section}]") + "\r\n");
-
-            return sb.Append("\r\n").ToString();
-        }
-
-        private static string FormatExperience(
-            ExperienceSummary experience, JobRequirements requirements, SkillMatcher.YearsCheck? overallYears)
-        {
-            string perSkill = experience.SkillMonths.Count == 0
-                ? "(none)"
-                : string.Join(", ", experience.SkillMonths.Select(s => $"{s.Skill} {s.Months / 12.0:0.#}y"));
-
-            string overall = overallYears is null ? ""
-                : overallYears.Credit >= 1.0 ? $" (job asks for {overallYears.RequiredMonths / 12}+: met)"
-                : $" (job asks for {overallYears.RequiredMonths / 12}+: NOT met, {overallYears.Credit:P0} credit)";
-
-            string required = requirements.SkillYears.Count == 0
-                ? "(none)"
-                : string.Join(", ", requirements.SkillYears.Select(r => $"{r.Key} {r.Value}+y"));
-
-            return $"Professional experience: {experience.TotalYears:0.#} years{overall}\r\n" +
-                   $"By skill: {perSkill}\r\n" +
-                   $"Years required by job: {required}\r\n\r\n";
-        }
-
-        private static string FormatSections(IReadOnlyList<ResumeSection> sections)
-        {
-            if (sections.Count == 0) return "(none)";
-            return string.Join(", ", sections.Select(s => s.Type == SectionType.Contact || s.Heading.Equals(s.Type.ToString(), StringComparison.OrdinalIgnoreCase)
-                ? s.Type.ToString()
-                : $"{s.Type} (\"{s.Heading}\")"));
-        }
-
-        private static string FormatSkills(IReadOnlyList<SkillMatcher.ScoredSkill> skills)
-        {
-            if (skills.Count == 0) return "(none)";
-            return string.Join(", ", skills.Select(s => s.Tier switch
-            {
-                2 => $"{s.Name} (hot)",
-                1 => $"{s.Name} (in demand)",
-                _ => s.Name
-            } + WhereFound(s) + YearsShort(s)));
-        }
-
-        /// <summary>
-        /// Marks skills where the resume shows fewer years than the job asks for.
-        /// </summary>
-        private static string YearsShort(SkillMatcher.ScoredSkill skill) =>
-            skill.Section is not null && skill.RequiredMonths is { } required && skill.ShownMonths < required
-                ? $" [shows {skill.ShownMonths / 12.0:0.#} of {required / 12}+ yrs]"
-                : "";
-
-        /// <summary>
-        /// Marks skills the resume doesn't show being used, since they count for less.
-        /// </summary>
-        private static string WhereFound(SkillMatcher.ScoredSkill skill) => skill.Section switch
-        {
-            null => "",
-            SectionType.Skills => " [skills list only]",
-            SectionType s when skill.Evidence < SkillMatcher.UsedEvidence => $" [{s}]",
-            _ => ""
-        };
     }
 }

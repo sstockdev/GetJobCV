@@ -1,4 +1,4 @@
-﻿namespace GetJobCV
+namespace GetJobCV
 {
     partial class Main
     {
@@ -28,91 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            SelectButton = new Button();
-            StatusLabel = new Label();
-            DebugTextBox = new RichTextBox();
-            ResultLabel = new Label();
-            JobDescriptionLabel = new Label();
-            JobDescriptionTextBox = new RichTextBox();
             SuspendLayout();
-            // 
-            // SelectButton
-            // 
-            SelectButton.Location = new Point(12, 12);
-            SelectButton.Name = "SelectButton";
-            SelectButton.Size = new Size(292, 88);
-            SelectButton.TabIndex = 0;
-            SelectButton.Text = "Select PDF";
-            SelectButton.UseVisualStyleBackColor = true;
-            SelectButton.Click += SelectButton_Click;
-            // 
-            // StatusLabel
-            // 
-            StatusLabel.AutoSize = true;
-            StatusLabel.Location = new Point(136, 120);
-            StatusLabel.Name = "StatusLabel";
-            StatusLabel.Size = new Size(39, 15);
-            StatusLabel.TabIndex = 1;
-            StatusLabel.Text = "Ready";
-            // 
-            // DebugTextBox
-            // 
-            DebugTextBox.Location = new Point(12, 169);
-            DebugTextBox.Name = "DebugTextBox";
-            DebugTextBox.Size = new Size(292, 144);
-            DebugTextBox.TabIndex = 2;
-            DebugTextBox.Text = "";
-            // 
-            // ResultLabel
-            // 
-            ResultLabel.AutoSize = true;
-            ResultLabel.Location = new Point(12, 151);
-            ResultLabel.Name = "ResultLabel";
-            ResultLabel.Size = new Size(39, 15);
-            ResultLabel.TabIndex = 3;
-            ResultLabel.Text = "Result";
-            // 
-            // JobDescriptionLabel
-            // 
-            JobDescriptionLabel.AutoSize = true;
-            JobDescriptionLabel.Location = new Point(358, 4);
-            JobDescriptionLabel.Name = "JobDescriptionLabel";
-            JobDescriptionLabel.Size = new Size(88, 15);
-            JobDescriptionLabel.TabIndex = 5;
-            JobDescriptionLabel.Text = "Job Description";
-            // 
-            // JobDescriptionTextBox
-            // 
-            JobDescriptionTextBox.Location = new Point(358, 22);
-            JobDescriptionTextBox.Name = "JobDescriptionTextBox";
-            JobDescriptionTextBox.Size = new Size(292, 144);
-            JobDescriptionTextBox.TabIndex = 4;
-            JobDescriptionTextBox.Text = "";
-            // 
+            //
             // Main
-            // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
-            Controls.Add(JobDescriptionLabel);
-            Controls.Add(JobDescriptionTextBox);
-            Controls.Add(ResultLabel);
-            Controls.Add(DebugTextBox);
-            Controls.Add(StatusLabel);
-            Controls.Add(SelectButton);
+            //
+            AutoScaleDimensions = new SizeF(96F, 96F);
+            AutoScaleMode = AutoScaleMode.Dpi;
+            ClientSize = new Size(1280, 860);
+            MinimumSize = new Size(1024, 720);
             Name = "Main";
-            Text = "GetJobCV - Main";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "GetJobCV";
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
-
-        private Button SelectButton;
-        private Label StatusLabel;
-        private RichTextBox DebugTextBox;
-        private Label ResultLabel;
-        private Label JobDescriptionLabel;
-        private RichTextBox JobDescriptionTextBox;
     }
 }

@@ -70,7 +70,7 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 
 ### 8. Application
 - [x] Background processing and error handling
-- [ ] Redo UI
+- [x] Redo UI: start, progress, and report screens instead of a debug text dump
 - [ ] Export the report
 - [ ] Job-posting scraping as a job-description source ("web scraping") [C Fig. 2]
 
