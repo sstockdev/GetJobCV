@@ -104,6 +104,7 @@ namespace GetJobCV
 
                 DebugTextBox.Text =
                    $"GitHub: {result.Socials.GitHub}\r\nLinkedIn: {result.Socials.LinkedIn}\r\n\r\n" +
+                   $"Sections: {FormatSections(result.Sections)}\r\n\r\n" +
                    $"People: {string.Join(", ", result.Ner.People)}\r\n" +
                    $"Orgs: {string.Join(", ", result.Ner.Organizations)}\r\n" +
                    $"Locations: {string.Join(", ", result.Ner.Locations)}\r\n\r\n" +
@@ -129,6 +130,7 @@ namespace GetJobCV
         /// </summary>
         private sealed record AnalysisResult(
             Socials Socials,
+            IReadOnlyList<ResumeSection> Sections,
             NerResult Ner,
             double Score,
             SkillMatcher.SkillReport Skills);
@@ -170,6 +172,10 @@ namespace GetJobCV
             status.Report("Extracting Socials");
             Socials socials = SocialExtractor.Extract(resumeText, hyperlinks);
 
+            // Split into Education, Experience, Skills, ...
+            status.Report("Finding Sections");
+            IReadOnlyList<ResumeSection> sections = SectionSegmenter.Segment(resumeText);
+
             // Run NER on text
             status.Report("Running Named Entity Recognition");
             NerResult resumeNer = ner.Extract(resumeText);
@@ -196,7 +202,15 @@ namespace GetJobCV
             SkillMatcher.SkillReport skillReport =
                 SkillMatcher.Match(resumeSkills, jdNer.Skills, skillTiers);
 
-            return new AnalysisResult(socials, resumeNer, score, skillReport);
+            return new AnalysisResult(socials, sections, resumeNer, score, skillReport);
+        }
+
+        private static string FormatSections(IReadOnlyList<ResumeSection> sections)
+        {
+            if (sections.Count == 0) return "(none)";
+            return string.Join(", ", sections.Select(s => s.Type == SectionType.Contact || s.Heading.Equals(s.Type.ToString(), StringComparison.OrdinalIgnoreCase)
+                ? s.Type.ToString()
+                : $"{s.Type} (\"{s.Heading}\")"));
         }
 
         private static string FormatSkills(IReadOnlyList<SkillMatcher.ScoredSkill> skills)
