@@ -357,8 +357,11 @@ namespace GetJobCV
             // "Python is a plus", "Preferred qualifications": these count for less
             IReadOnlySet<string> preferred = QualificationSplitter.PreferredSkills(jobDescription, ner);
 
+            // "One of the following", "such as", "Python or Java", topic lists: any one will do
+            IReadOnlyList<IReadOnlySet<string>> alternatives = AlternativeGroups.Find(jobDescription, ner);
+
             SkillMatcher.SkillReport skillReport = SkillMatcher.Match(
-                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths, overallYears, preferred);
+                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths, overallYears, preferred, alternatives);
 
             return new AnalysisResult(
                 socials, sections, record, experience, requirements, resumeNer, score, skillReport);

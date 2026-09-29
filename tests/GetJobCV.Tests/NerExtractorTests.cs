@@ -51,6 +51,24 @@ namespace GetJobCV.Tests
         }
 
         [Fact]
+        public void Reads_a_topic_list_as_alternatives()
+        {
+            const string jd = """
+                • Machine Learning • Distributed Systems and Data Management • Database Systems • Quantum Computing
+                • Network Development • Query Processing and Optimization • Automated Reasoning • Embedded Systems •
+                Data Engineering • Mobile Development • Game Development
+                • Contribute to clear and accurate technical documentation.
+                • Work in an agile environment practicing CI/CD principles while participating in operational responsibilities.
+                """;
+            IReadOnlySet<string> group = Assert.Single(AlternativeGroups.Find(jd, _ner));
+
+            Assert.Contains("Machine Learning", group, StringComparer.OrdinalIgnoreCase);
+            Assert.Contains("Game Development", group, StringComparer.OrdinalIgnoreCase);
+            Assert.DoesNotContain("agile", group, StringComparer.OrdinalIgnoreCase);
+            Assert.DoesNotContain("CI/CD", group, StringComparer.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void Reads_nice_to_have_skills_from_a_job_description()
         {
             IReadOnlySet<string> preferred = QualificationSplitter.PreferredSkills(

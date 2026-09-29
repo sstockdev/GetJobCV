@@ -17,9 +17,17 @@ namespace GetJobCV.UI
                 return "No known skills were recognized in the job description, so the score is text similarity only.";
 
             List<string> notes = [];
-            int missing = skills.Missing.Count(s => !s.Preferred);
+            int missing = skills.Missing.Count(s => !s.Preferred && s.Group is null);
             if (missing > 0)
                 notes.Add($"{missing} skill{(missing == 1 ? "" : "s")} the job requires {(missing == 1 ? "wasn't" : "weren't")} found in your resume.");
+
+            // A list where any one skill counts is one requirement, however long it is
+            List<SkillMatcher.ScoredSkill[]> unmet = [.. skills.Missing.Where(s => !s.Preferred && s.Group is not null)
+                .GroupBy(s => s.Group).Select(g => g.ToArray())];
+            if (unmet.Count == 1)
+                notes.Add($"None of the {unmet[0].Length} options in a list where any one counts is in your resume.");
+            else if (unmet.Count > 1)
+                notes.Add($"{unmet.Count} lists where any one skill counts have no match in your resume.");
 
             int missingNice = skills.Missing.Count(s => s.Preferred);
             if (missingNice > 0)
@@ -70,10 +78,20 @@ namespace GetJobCV.UI
             skill.Preferred ? $"nice to have, counts {SkillMatcher.PreferredWeight:P0} of a required skill" : null;
 
         /// <summary>
-        /// Everything about one skill in a line: demand · evidence · years · nice to have.
+        /// "one of 11 options where any one counts", or null outside a group of alternatives.
+        /// </summary>
+        public static string? Alternative(SkillMatcher.ScoredSkill skill) => skill.GroupSize switch
+        {
+            0 => null,
+            int n when skill.Section is null => $"one of {n} options where any one counts",
+            int n => $"one of {n} options where any one counts; this one covers them",
+        };
+
+        /// <summary>
+        /// Everything about one skill in a line: demand · evidence · years · nice to have · alternatives.
         /// </summary>
         public static string Explanation(SkillMatcher.ScoredSkill skill) =>
-            string.Join(" · ", new[] { Demand(skill), Evidence(skill), Years(skill), NiceToHave(skill) }.OfType<string>());
+            string.Join(" · ", new[] { Demand(skill), Evidence(skill), Years(skill), NiceToHave(skill), Alternative(skill) }.OfType<string>());
 
         /// <summary>
         /// The short tag on a chip: where it was found when that counts for less, and a
@@ -85,6 +103,9 @@ namespace GetJobCV.UI
                 : skill.Section is null ? $"{required / 12}+ yrs"
                 : IsShortOnYears(skill) ? $"{skill.ShownMonths / 12.0:0.#} of {required / 12}+ yrs"
                 : null;
+            // A missing option from a list where any one counts
+            if (skill.Section is null && skill.GroupSize > 0)
+                years = years is null ? $"any of {skill.GroupSize}" : $"any of {skill.GroupSize} · {years}";
             string? where = skill.Section switch
             {
                 null => null,

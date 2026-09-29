@@ -129,7 +129,7 @@ namespace GetJobCV.UI
             foreach (SkillMatcher.ScoredSkill skill in skills)
             {
                 string demand = skill.Tier switch { 2 => "Hot", 1 => "In demand", _ => "" };
-                string notes = string.Join("; ", new[] { ReportText.Years(skill), ReportText.NiceToHave(skill) }.OfType<string>());
+                string notes = string.Join("; ", new[] { ReportText.Years(skill), ReportText.NiceToHave(skill), ReportText.Alternative(skill) }.OfType<string>());
                 string evidence = ReportText.Evidence(skill);
                 html.Append($"""
                           <tr{(skill.Preferred ? " class=\"nice\"" : "")}><th scope="row">{H(ReportText.DisplayName(skill.Name))}</th><td>{demand}</td><td>{H(char.ToUpperInvariant(evidence[0]) + evidence[1..])}</td><td>{H(notes)}</td></tr>

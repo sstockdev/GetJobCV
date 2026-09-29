@@ -65,9 +65,11 @@ namespace GetJobCV.Modules
         /// <param name="RequiredMonths">Months of experience the job description asks for, if any</param>
         /// <param name="ShownMonths">Months of roles in the resume that mention the skill</param>
         /// <param name="Preferred">The job description only lists it as nice to have</param>
+        /// <param name="Group">Which group of alternatives it's in ("one of the following"), if any</param>
+        /// <param name="GroupSize">How many job skills are in that group; 0 when not in one</param>
         public sealed record ScoredSkill(
             string Name, int Tier, SectionType? Section = null, int? RequiredMonths = null, int ShownMonths = 0,
-            bool Preferred = false)
+            bool Preferred = false, int? Group = null, int GroupSize = 0)
         {
             /// <summary>
             /// Demand weight: <c>Tier + 1</c>
@@ -129,6 +131,10 @@ namespace GetJobCV.Modules
         /// <param name="shownMonths">Skill to months of resume roles that mention it (case-insensitive)</param>
         /// <param name="overallYears">The job's overall years-of-experience requirement, if any</param>
         /// <param name="preferred">Job skills that are only nice to have (case-insensitive)</param>
+        /// <param name="alternatives">Groups of job skills where any one will do (from
+        /// <see cref="AlternativeGroups"/>). A group counts as one requirement: its weight is
+        /// its heaviest member's, its credit the best matched member's. Once one member
+        /// matches, the others aren't missing.</param>
         public static SkillReport Match(
             IEnumerable<(string Skill, SectionType Section)> resumeMentions,
             IEnumerable<string> jobSkills,
@@ -136,26 +142,46 @@ namespace GetJobCV.Modules
             IReadOnlyDictionary<string, int>? requiredYears = null,
             IReadOnlyDictionary<string, int>? shownMonths = null,
             YearsCheck? overallYears = null,
-            IReadOnlySet<string>? preferred = null)
+            IReadOnlySet<string>? preferred = null,
+            IReadOnlyList<IReadOnlySet<string>>? alternatives = null)
         {
             Dictionary<string, SectionType> resume = BestSections(resumeMentions);
             HashSet<string> job = Distinct(jobSkills);
             HashSet<string> niceToHave = new(preferred ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
 
-            ScoredSkill Score(string name, SectionType? section, bool isJobSkill) => new(
-                name,
-                tiers.GetValueOrDefault(name),
-                section,
-                requiredYears?.TryGetValue(name, out int years) == true ? years * 12 : null,
-                shownMonths?.GetValueOrDefault(name) ?? 0,
-                isJobSkill && niceToHave.Contains(name));
+            // Only job skills count toward a group, and a group needs two to be a choice
+            List<List<string>> groups = [.. (alternatives ?? [])
+                .Select(g => g.Where(job.Contains).Distinct(StringComparer.OrdinalIgnoreCase).ToList())
+                .Where(g => g.Count >= 2)];
+            // A skill in two groups belongs to the first; a group left with one member isn't a choice
+            Dictionary<string, int> groupOf = new(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < groups.Count; i++)
+                foreach (string name in groups[i])
+                    groupOf.TryAdd(name, i);
+            Dictionary<int, int> groupSize = groupOf.GroupBy(p => p.Value).ToDictionary(g => g.Key, g => g.Count());
+            foreach (string lone in groupOf.Where(p => groupSize[p.Value] < 2).Select(p => p.Key).ToList())
+                groupOf.Remove(lone);
+
+            ScoredSkill Score(string name, SectionType? section, bool isJobSkill)
+            {
+                int? group = isJobSkill && groupOf.TryGetValue(name, out int g) ? g : null;
+                return new(
+                    name,
+                    tiers.GetValueOrDefault(name),
+                    section,
+                    requiredYears?.TryGetValue(name, out int years) == true ? years * 12 : null,
+                    shownMonths?.GetValueOrDefault(name) ?? 0,
+                    isJobSkill && niceToHave.Contains(name),
+                    group,
+                    group is { } id ? groupSize[id] : 0);
+            }
 
             List<ScoredSkill> matched = [];
             List<ScoredSkill> missing = [];
             double coveredWeight = 0;
             double totalWeight = 0;
 
-            foreach (string name in job)
+            foreach (string name in job.Where(n => !groupOf.ContainsKey(n)))
             {
                 if (resume.TryGetValue(name, out SectionType section))
                 {
@@ -170,6 +196,23 @@ namespace GetJobCV.Modules
                     missing.Add(skill);
                     totalWeight += skill.CoverageWeight;
                 }
+            }
+
+            foreach (IGrouping<int, string> group in groupOf.GroupBy(pair => pair.Value, pair => pair.Key))
+            {
+                List<ScoredSkill> members = [.. group.Select(name =>
+                    Score(name, resume.TryGetValue(name, out SectionType s) ? s : null, true))];
+                List<ScoredSkill> have = [.. members.Where(m => m.Section is not null)];
+
+                totalWeight += members.Max(m => m.CoverageWeight);
+                coveredWeight += have.Count == 0 ? 0
+                    : members.Max(m => m.CoverageWeight) * have.Max(m => m.Evidence * m.YearsFactor);
+
+                // Any one will do: with a match, the other options aren't missing
+                if (have.Count > 0)
+                    matched.AddRange(have);
+                else
+                    missing.AddRange(members);
             }
 
             if (overallYears is not null)
@@ -221,10 +264,11 @@ namespace GetJobCV.Modules
         }
 
         /// <summary>
-        /// Helper method to sort skills: required before nice to have, then by demand.
+        /// Helper method to sort skills: required before nice to have, single skills before
+        /// groups of alternatives (kept together), then by demand.
         /// </summary>
         private static List<ScoredSkill> Sort(List<ScoredSkill> skills) =>
-            [.. skills.OrderBy(s => s.Preferred).ThenByDescending(s => s.Weight).ThenBy(s => s.Name,
-                StringComparer.OrdinalIgnoreCase)];
+            [.. skills.OrderBy(s => s.Preferred).ThenBy(s => s.Group ?? -1).ThenByDescending(s => s.Weight)
+                .ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase)];
     }
 }
