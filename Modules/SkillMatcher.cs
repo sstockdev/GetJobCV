@@ -33,6 +33,23 @@ namespace GetJobCV.Modules
         public const double YearsShare = 0.5;
 
         /// <summary>
+        /// Coverage weight of an overall years-of-experience requirement ("5+ years of
+        /// experience"), the same as a hot skill.
+        /// </summary>
+        public const int OverallYearsWeight = 3;
+
+        /// <summary>
+        /// An overall years-of-experience requirement and what the resume shows.
+        /// </summary>
+        public sealed record YearsCheck(int RequiredMonths, int ShownMonths)
+        {
+            /// <summary>
+            /// Share of the requirement met, in <c>[0, 1]</c>
+            /// </summary>
+            public double Credit => RequiredMonths > 0 ? Math.Min(1.0, (double)ShownMonths / RequiredMonths) : 1.0;
+        }
+
+        /// <summary>
         /// A skill with it's O*NET demand tier and where the resume shows it
         /// </summary>
         /// <param name="Name">Skill</param>
@@ -69,12 +86,14 @@ namespace GetJobCV.Modules
         /// <param name="Matched">Job description skills the resume has, important first</param>
         /// <param name="Missing">Job descrption skills the resume is missing, most important first</param>
         /// <param name="Extra">Resume skills the job descrption does not ask for, most important first</param>
-        /// <param name="WeightCoverage">The share of total job description skill weight the resume covers,
-        /// scaled by how strongly each matched skill is evidenced, in <c>[0, 1]</c></param>
+        /// <param name="OverallYears">The job's overall years requirement, if it has one</param>
+        /// <param name="WeightCoverage">The share of total job description requirement weight the resume
+        /// covers (skills scaled by evidence and years, plus <paramref name="OverallYears"/>), in <c>[0, 1]</c></param>
         public sealed record SkillReport(
             IReadOnlyList<ScoredSkill> Matched,
             IReadOnlyList<ScoredSkill> Missing,
             IReadOnlyList<ScoredSkill> Extra,
+            YearsCheck? OverallYears,
             double WeightCoverage);
 
         /// <summary>
@@ -94,12 +113,14 @@ namespace GetJobCV.Modules
         /// <param name="tiers">O*NET skill name to demand tier</param>
         /// <param name="requiredYears">Skill to years the job description asks for (case-insensitive)</param>
         /// <param name="shownMonths">Skill to months of resume roles that mention it (case-insensitive)</param>
+        /// <param name="overallYears">The job's overall years-of-experience requirement, if any</param>
         public static SkillReport Match(
             IEnumerable<(string Skill, SectionType Section)> resumeMentions,
             IEnumerable<string> jobSkills,
             IReadOnlyDictionary<string, int> tiers,
             IReadOnlyDictionary<string, int>? requiredYears = null,
-            IReadOnlyDictionary<string, int>? shownMonths = null)
+            IReadOnlyDictionary<string, int>? shownMonths = null,
+            YearsCheck? overallYears = null)
         {
             Dictionary<string, SectionType> resume = BestSections(resumeMentions);
             HashSet<string> job = Distinct(jobSkills);
@@ -133,12 +154,18 @@ namespace GetJobCV.Modules
                 }
             }
 
+            if (overallYears is not null)
+            {
+                coveredWeight += OverallYearsWeight * overallYears.Credit;
+                totalWeight += OverallYearsWeight;
+            }
+
             List<ScoredSkill> extra = [.. resume.Where(pair => !job.Contains(pair.Key))
                 .Select(pair => Score(pair.Key, pair.Value))];
 
             double coverage = totalWeight > 0 ? coveredWeight / totalWeight : 0.0;
 
-            return new SkillReport(Sort(matched), Sort(missing), Sort(extra), coverage);
+            return new SkillReport(Sort(matched), Sort(missing), Sort(extra), overallYears, coverage);
         }
 
         /// <summary>

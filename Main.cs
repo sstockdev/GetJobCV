@@ -104,7 +104,7 @@ namespace GetJobCV
 
                 DebugTextBox.Text =
                    FormatRecord(result.Record) +
-                   FormatExperience(result.Experience, result.Requirements) +
+                   FormatExperience(result.Experience, result.Requirements, result.Skills.OverallYears) +
                    $"Sections: {FormatSections(result.Sections)}\r\n\r\n" +
                    $"People: {string.Join(", ", result.Ner.People)}\r\n" +
                    $"Orgs: {string.Join(", ", result.Ner.Organizations)}\r\n" +
@@ -223,8 +223,12 @@ namespace GetJobCV
             Dictionary<string, int> shownMonths = experience.SkillMonths
                 .ToDictionary(s => s.Skill, s => s.Months, StringComparer.OrdinalIgnoreCase);
 
+            SkillMatcher.YearsCheck? overallYears = requirements.OverallYears is { } years
+                ? new SkillMatcher.YearsCheck(years * 12, experience.TotalMonths)
+                : null;
+
             SkillMatcher.SkillReport skillReport = SkillMatcher.Match(
-                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths);
+                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths, overallYears);
 
             return new AnalysisResult(
                 socials, sections, record, experience, requirements, resumeNer, score, skillReport);
@@ -254,15 +258,16 @@ namespace GetJobCV
             return sb.Append("\r\n").ToString();
         }
 
-        private static string FormatExperience(ExperienceSummary experience, JobRequirements requirements)
+        private static string FormatExperience(
+            ExperienceSummary experience, JobRequirements requirements, SkillMatcher.YearsCheck? overallYears)
         {
             string perSkill = experience.SkillMonths.Count == 0
                 ? "(none)"
                 : string.Join(", ", experience.SkillMonths.Select(s => $"{s.Skill} {s.Months / 12.0:0.#}y"));
 
-            string overall = requirements.OverallYears is { } years
-                ? $" (job asks for {years}+: {(experience.TotalYears >= years ? "met" : "NOT met")})"
-                : "";
+            string overall = overallYears is null ? ""
+                : overallYears.Credit >= 1.0 ? $" (job asks for {overallYears.RequiredMonths / 12}+: met)"
+                : $" (job asks for {overallYears.RequiredMonths / 12}+: NOT met, {overallYears.Credit:P0} credit)";
 
             string required = requirements.SkillYears.Count == 0
                 ? "(none)"
