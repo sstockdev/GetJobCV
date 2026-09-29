@@ -122,18 +122,22 @@ namespace GetJobCV.Modules
                 if (IsBullet(line))
                     continue;
 
-                string rest = TrySplitDate(line, out string before, out DateRange? d) ? before : line;
+                // "... 2016 - 2020  GPA 3.7": the dates only end the line once the GPA is off
+                string withoutGpa = GpaRegex().Replace(line, "").TrimEnd(' ', ',', '|', '-', '–', '—');
+                string rest = TrySplitDate(withoutGpa, out string before, out DateRange? d) ? before : withoutGpa;
                 bool isDegree = DegreeRegex().IsMatch(rest);
-                bool isSchool = !isDegree && SchoolRegex().IsMatch(rest);
+                bool isSchool = SchoolRegex().IsMatch(rest);
 
-                if ((isDegree && degree is not null) || (isSchool && school is not null))
+                if ((isDegree && degree is not null) || (!isDegree && isSchool && school is not null))
                 {
                     yield return new EducationEntry(degree, school, location, dates, gpa);
                     degree = school = location = gpa = null;
                     dates = null;
                 }
 
-                if (isDegree)
+                if (isDegree && isSchool && SplitDegreeAndSchool(rest) is { } both)
+                    (degree, school, location) = both;
+                else if (isDegree)
                     degree = rest;
                 else if (isSchool)
                     (school, location) = SplitLocation(rest);
@@ -155,6 +159,11 @@ namespace GetJobCV.Modules
                 return null;
 
             string? other = entry.Skip(1).TakeWhile(l => !IsBullet(l)).FirstOrDefault();
+
+            // Everything on the dated line: "Software Engineer, Acme Corp, Remote  Jan 2022 - Present"
+            if (other is null && SplitOneLineRole(dateLine) is { } oneLine)
+                return new ExperienceEntry(oneLine.Title, oneLine.Org, oneLine.Location,
+                    dates!, section, string.Join('\n', entry));
 
             string? title = dateLine.Length > 0 ? dateLine : null;
             string? orgLine = other;
@@ -197,6 +206,87 @@ namespace GetJobCV.Modules
             string name = parts[0];
             string? location = parts.Length > 1 ? parts[1].TrimEnd(',', ' ') : null;
             return (name.Length > 0 ? name : null, string.IsNullOrEmpty(location) ? null : location);
+        }
+
+        /// <summary>
+        /// A role header with title, organization, and location on one line, in either
+        /// order: "Software Engineer, Acme Corp, Remote", "Acme Corp | Software Engineer",
+        /// "Developer at Initech, Austin, TX". A line with no title word and a '|' is
+        /// "Organization | Location". Null when the line has only one part.
+        /// </summary>
+        private static (string? Title, string? Org, string? Location)? SplitOneLineRole(string line)
+        {
+            List<string> parts = SplitParts(line);
+            if (parts.Count < 2)
+                return null;
+
+            int t = parts.FindIndex(LooksLikeTitle);
+            if (t < 0)
+            {
+                // No title anywhere: "Organization | Location"
+                if (line.Contains('|'))
+                {
+                    (string? name, string? place) = SplitLocation(line);
+                    return (null, name, place);
+                }
+                t = 0;
+            }
+
+            // Title first: org follows it. Org first: org is everything before the title.
+            string? org = t == 0
+                ? parts[1]
+                : string.Join(", ", parts.Take(t));
+            int locationFrom = t == 0 ? 2 : t + 1;
+            string? location = parts.Count > locationFrom ? string.Join(", ", parts.Skip(locationFrom)) : null;
+            return (parts[t], org, location);
+        }
+
+        /// <summary>
+        /// "B.S. Computer Science, State University, Springfield, IL" →
+        /// ("B.S. Computer Science", "State University", "Springfield, IL"). The school can
+        /// come first too. Null when the parts can't be told apart.
+        /// </summary>
+        private static (string Degree, string School, string? Location)? SplitDegreeAndSchool(string line)
+        {
+            List<string> parts = SplitParts(line);
+            int s = parts.FindIndex(p => SchoolRegex().IsMatch(p) && !DegreeRegex().IsMatch(p));
+            if (parts.Count < 2 || s < 0)
+                return null;
+
+            if (s > 0)
+            {
+                string? location = s + 1 < parts.Count ? string.Join(", ", parts.Skip(s + 1)) : null;
+                return (string.Join(", ", parts.Take(s)), parts[s], location);
+            }
+
+            // School first: the degree starts at the first part naming one; between is location.
+            // A bare "MA" or "MS" there is more likely a state than a degree.
+            List<int> named = [.. Enumerable.Range(1, parts.Count - 1).Where(i => DegreeRegex().IsMatch(parts[i]))];
+            if (named.Count == 0)
+                return null;
+            int d = named.FirstOrDefault(i => !StateCodeRegex().IsMatch(parts[i]), named[0]);
+            string? between = d > 1 ? string.Join(", ", parts.Skip(1).Take(d - 1)) : null;
+            return (string.Join(", ", parts.Skip(d)), parts[0], between);
+        }
+
+        /// <summary>
+        /// Split a header line on ',', '|', a spaced dash, or " at ". A company suffix
+        /// ("Inc.", "LLC") stays with the name before it.
+        /// </summary>
+        private static List<string> SplitParts(string line)
+        {
+            List<string> parts = [];
+            foreach (string part in PartSeparatorRegex().Split(line))
+            {
+                string p = part.Trim();
+                if (p.Length == 0)
+                    continue;
+                if (parts.Count > 0 && CompanySuffixRegex().IsMatch(p))
+                    parts[^1] += ", " + p;
+                else
+                    parts.Add(p);
+            }
+            return parts;
         }
 
         /// <summary>
@@ -277,6 +367,15 @@ namespace GetJobCV.Modules
 
         [GeneratedRegex(@"\b(?:University|College|Institute|School|Academy|Polytechnic)\b", RegexOptions.IgnoreCase)]
         private static partial Regex SchoolRegex();
+
+        [GeneratedRegex(@"\s*[,|]\s*|\s+[-–—]\s+|\s+(?:at|@)\s+")]
+        private static partial Regex PartSeparatorRegex();
+
+        [GeneratedRegex(@"^[A-Z]{2}$")]
+        private static partial Regex StateCodeRegex();
+
+        [GeneratedRegex(@"^(?:Inc|LLC|L\.L\.C|Ltd|Co|Corp|GmbH|PLC|LLP|S\.A)\.?$", RegexOptions.IgnoreCase)]
+        private static partial Regex CompanySuffixRegex();
 
         [GeneratedRegex(@"GPA\s*:?\s*(?<gpa>\d\.\d{1,2}(?:\s*/\s*\d\.\d{1,2})?)", RegexOptions.IgnoreCase)]
         private static partial Regex GpaRegex();
