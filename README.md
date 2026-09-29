@@ -66,8 +66,11 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 - [ ] Optional: TextRank-style resume summary (sentences → vectors → similarity matrix → graph → ranked sentences) [P Fig. 4]
 
 ### 7. Performance evaluation [P step 6]
-- [ ] Hand-labeled test set of resume/job pairs (fit or no fit, expected skills)
-- [ ] Precision, recall, F1, and accuracy for skill extraction, classification, and shortlisting
+- [x] Hand-labeled test set of resume/job pairs (fit or no fit, expected skills), run through the whole pipeline (`tests/GetJobCV.Tests/Evaluation`)
+- [x] Precision, recall, and F1 for skill extraction; within-job concordance, AUC, and NDCG for fit ranking, with floors that fail on a regression
+- [x] Opt-in benchmark on the public resume/job fit dataset (not bundled: no license)
+- [ ] Grow the gold set past 4 jobs and 9 resumes, with more fields than tech and nursing
+- [ ] Accuracy for classification and shortlisting, once those exist
 - [ ] Unit tests for each module
 
 ### 8. Application

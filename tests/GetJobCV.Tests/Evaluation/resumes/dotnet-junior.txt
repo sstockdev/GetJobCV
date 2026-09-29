@@ -1,0 +1,25 @@
+Priya Natarajan
+Rochester, MN · priya.n@example.com
+
+SUMMARY
+Software developer with about a year and a half of experience in C# and web development, looking to grow into backend engineering.
+
+EXPERIENCE
+Software Developer | Mayfield Insurance | Rochester, MN  Feb 2025 - Present
+- Build and maintain internal claims tools in C# and ASP.NET MVC
+- Write SQL queries and stored procedures for claims reports
+- Deploy updates to Azure App Service
+- Fix bugs and write unit tests with xUnit
+
+IT Intern | Rochester Community College | Rochester, MN  Jun 2024 - Dec 2024
+- Supported staff laptops and wrote PowerShell scripts to automate account setup
+
+EDUCATION
+B.S. Software Engineering, Winona State University  2020 - 2024
+
+PROJECTS
+Campus Events API
+- REST API in C# and ASP.NET Core with Entity Framework and SQLite
+
+SKILLS
+C#, ASP.NET, SQL, Azure, Git, xUnit, PowerShell, HTML, CSS

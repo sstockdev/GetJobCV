@@ -1,0 +1,27 @@
+Marcus Olsen
+Madison, WI · marcus.olsen@example.com
+linkedin.com/in/marcusolsen
+
+SUMMARY
+Backend engineer with 6 years building Java microservices on AWS.
+
+EXPERIENCE
+Senior Backend Engineer | Tailwind Retail | Madison, WI  Jan 2022 - Present
+- Own the order management microservices in Java and Spring Boot
+- Design REST APIs used by the web and mobile apps
+- Run services on AWS with Docker and Kubernetes (EKS)
+- Tune PostgreSQL queries and schema migrations
+
+Software Engineer | Badger Mutual | Madison, WI  Jul 2020 - Dec 2021
+- Built policy quoting services in Java with Spring
+- Wrote Jenkins CI/CD pipelines
+- Added Kafka event streaming between services
+
+Associate Engineer | Initech | Milwaukee, WI  Jun 2019 - Jun 2020
+- Maintained Java batch jobs and Oracle SQL reports
+
+EDUCATION
+B.S. Computer Engineering, University of Wisconsin-Madison  2015 - 2019
+
+SKILLS
+Java, Spring Boot, PostgreSQL, AWS, Docker, Kubernetes, Kafka, Jenkins, Git, SQL

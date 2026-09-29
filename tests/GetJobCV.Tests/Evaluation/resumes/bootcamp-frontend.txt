@@ -1,0 +1,24 @@
+Tyler Brooks
+Milwaukee, WI · tyler.brooks@example.com
+github.com/tbrooks
+
+SUMMARY
+Career changer and coding bootcamp graduate building web apps with React. Previously a restaurant manager.
+
+PROJECTS
+Recipe Finder
+- React app with a search UI over a public recipe API, written in JavaScript with HTML and CSS
+- Deployed on Netlify
+
+Budget Tracker
+- React and TypeScript app with charts; unit tests in Jest
+
+EXPERIENCE
+Restaurant Manager | Harbor Grill | Milwaukee, WI  Mar 2018 - Jan 2025
+- Managed a staff of 20 and handled scheduling, inventory, and budgeting
+
+EDUCATION
+Full Stack Web Development Certificate, Milwaukee Code Academy  2025
+
+SKILLS
+JavaScript, React, TypeScript, HTML, CSS, Jest, Git

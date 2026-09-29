@@ -1,0 +1,21 @@
+Kevin Tran
+Omaha, NE · kevin.tran@example.com
+
+SUMMARY
+Data analyst with 3 years turning sales data into reports and dashboards. Learning Python for analysis.
+
+EXPERIENCE
+Data Analyst | Heartland Foods | Omaha, NE  Aug 2023 - Present
+- Build Power BI dashboards for regional sales teams
+- Write SQL queries against the sales data warehouse
+- Clean and merge data in Excel for monthly forecasts
+- Started automating reports with Python and pandas
+
+Business Analyst Intern | Heartland Foods | Omaha, NE  May 2023 - Aug 2023
+- Gathered requirements and documented reporting needs
+
+EDUCATION
+B.S. Business Analytics, University of Nebraska Omaha  2019 - 2023
+
+SKILLS
+SQL, Power BI, Excel, Python, pandas, statistics, data visualization, communication

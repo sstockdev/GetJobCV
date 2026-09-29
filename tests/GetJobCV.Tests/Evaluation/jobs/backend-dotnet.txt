@@ -1,0 +1,25 @@
+Senior Backend Engineer (.NET)
+Northwind Logistics · Minneapolis, MN (Hybrid)
+
+About the role
+We are looking for a Senior Backend Engineer to design and build the services behind our shipment tracking platform. You will own APIs that handle millions of tracking events a day and work closely with product and the frontend team.
+
+What you'll do
+- Design, build, and maintain REST APIs in C# and ASP.NET Core
+- Model data and tune queries in Microsoft SQL Server
+- Ship services to Azure using Docker and our CI/CD pipelines
+- Review code and mentor junior engineers
+
+Requirements
+- 5+ years of professional software development experience
+- 4+ years of C#
+- Strong experience with ASP.NET Core and Entity Framework
+- Solid SQL skills and experience with Microsoft SQL Server
+- Experience deploying to Azure
+- Familiarity with Docker
+- Comfortable with Git and code review
+
+Preferred Qualifications
+- Experience with Kubernetes
+- Terraform or other infrastructure as code tools
+- Experience with message queues such as RabbitMQ or Azure Service Bus

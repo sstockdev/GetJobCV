@@ -1,0 +1,23 @@
+Sofia Martinez
+Chicago, IL · sofia.martinez@example.com
+github.com/sofiam
+
+SUMMARY
+Frontend engineer with 4 years building React apps with a focus on accessibility and testing.
+
+EXPERIENCE
+Frontend Engineer | Brightline Payments | Chicago, IL  Jun 2022 - Present
+- Build customer dashboard features in React, TypeScript, and Next.js
+- Write unit tests with Jest and React Testing Library; raised coverage from 40% to 85%
+- Led a WCAG accessibility audit and fixed 120 issues
+- Work from Figma designs with the design team
+
+Web Developer | Lantern Media | Chicago, IL  Jul 2021 - May 2022
+- Built marketing sites with JavaScript, HTML, and CSS
+- Added a GraphQL client to the article pages
+
+EDUCATION
+B.A. Graphic Design, Columbia College Chicago  2017 - 2021
+
+SKILLS
+JavaScript, TypeScript, React, Next.js, HTML, CSS, Jest, GraphQL, Figma, Git, accessibility

@@ -1,0 +1,23 @@
+Data Scientist
+Contoso Health Analytics · Remote (US)
+
+Contoso Health Analytics helps hospital systems predict patient readmissions. We are hiring a Data Scientist to build and evaluate predictive models and to share findings with clinical and business stakeholders.
+
+Responsibilities
+- Build, validate, and monitor machine learning models for readmission risk
+- Clean and explore large datasets with Python and SQL
+- Design and analyze A/B tests of care interventions
+- Build dashboards and present results to non-technical audiences
+
+Minimum Qualifications
+- 3+ years of experience in a data science or analytics role
+- Strong Python, including pandas, NumPy, and scikit-learn
+- Strong SQL
+- Solid grounding in statistics and machine learning
+- Experience with one of the following: Tableau, Power BI, or Looker
+- Strong communication skills
+
+Nice to have
+- Experience with PyTorch or TensorFlow
+- Spark or other big data tools
+- Healthcare data experience is a plus

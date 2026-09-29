@@ -1,0 +1,23 @@
+Frontend Engineer
+Fabrikam Studio · Chicago, IL
+
+Fabrikam builds scheduling software for small clinics. Join our frontend team to build fast, accessible web apps that thousands of front desk staff use every day.
+
+You will
+- Build features in React and TypeScript
+- Write clean, semantic HTML and CSS
+- Write unit tests with Jest and React Testing Library
+- Work with designers in Figma to turn mockups into components
+
+You have
+- 3+ years of experience building web applications with JavaScript
+- 2+ years of React
+- Experience with TypeScript
+- Strong HTML and CSS skills, including responsive design
+- Experience writing unit tests
+- Familiarity with Git
+
+Bonus points
+- Next.js
+- GraphQL
+- Experience with web accessibility (WCAG)

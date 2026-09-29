@@ -1,0 +1,25 @@
+Aisha Bello
+Remote · aisha.bello@example.com
+github.com/aishabello
+
+SUMMARY
+Data scientist with 4 years of experience building predictive models in healthcare and insurance.
+
+EXPERIENCE
+Data Scientist | Meridian Health Partners | Remote  May 2022 - Present
+- Built a readmission risk model in Python with scikit-learn and pandas that cut avoidable readmissions 8%
+- Wrote SQL pipelines over the claims warehouse in Snowflake
+- Designed and analyzed A/B tests for patient outreach programs
+- Built Tableau dashboards for clinical leadership
+- Prototyped deep learning models for clinical notes in PyTorch
+
+Data Analyst | Prairie Insurance | Des Moines, IA  Aug 2020 - Apr 2022
+- Built churn models with logistic regression and random forests
+- Automated weekly reporting with Python and SQL
+
+EDUCATION
+M.S. Statistics, Iowa State University  2018 - 2020
+B.S. Mathematics, University of Iowa  2014 - 2018
+
+SKILLS
+Python, pandas, NumPy, scikit-learn, PyTorch, SQL, Snowflake, Tableau, statistics, machine learning, A/B testing, Git

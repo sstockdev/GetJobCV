@@ -1,0 +1,28 @@
+Jordan Reyes
+Minneapolis, MN · jordan.reyes@example.com · (612) 555-0142
+github.com/jreyes-dev
+
+SUMMARY
+Backend engineer with 7 years building high-traffic .NET services. Focused on API design, SQL performance, and cloud deployments on Azure.
+
+EXPERIENCE
+Senior Software Engineer | Cedar Freight | Minneapolis, MN  Mar 2021 - Present
+- Lead developer on the carrier integration platform: REST APIs in C# and ASP.NET Core serving 40M requests a day
+- Cut p95 query latency 60% by redesigning indexes and stored procedures in Microsoft SQL Server
+- Moved 12 services from VMs to Docker containers on Azure Kubernetes Service
+- Wrote Terraform modules for shared Azure infrastructure
+- Mentor three junior engineers and run weekly code review sessions
+
+Software Engineer | Lakeside Bank | St. Paul, MN  Jun 2018 - Feb 2021
+- Built loan servicing APIs in C# with ASP.NET Core and Entity Framework
+- Added RabbitMQ messaging between the payments and ledger services
+- Set up CI/CD pipelines in Azure DevOps
+
+Junior Developer | Pinecrest Software | Bloomington, MN  Aug 2017 - May 2018
+- Maintained an ASP.NET MVC web app and SQL Server reporting queries
+
+EDUCATION
+B.S. Computer Science, University of Minnesota  2013 - 2017
+
+SKILLS
+C#, .NET, ASP.NET Core, Entity Framework, SQL Server, Azure, Docker, Kubernetes, Terraform, RabbitMQ, Git, Azure DevOps

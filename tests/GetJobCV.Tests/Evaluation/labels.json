@@ -1,0 +1,85 @@
+{
+  "jobs": {
+    "backend-dotnet": [
+      ".NET", "REST API", "C#", "ASP.NET Core", "Microsoft SQL Server", "Azure", "Docker", "CI/CD",
+      "Entity Framework", "SQL", "Git", "Kubernetes", "Terraform", "infrastructure as code",
+      "message queues", "RabbitMQ", "Azure Service Bus",
+      "code review", "mentoring"
+    ],
+    "data-scientist": [
+      "machine learning", "Python", "SQL", "A/B testing", "pandas", "NumPy", "scikit-learn",
+      "statistics", "Tableau", "Power BI", "Looker", "communication", "PyTorch", "TensorFlow",
+      "Spark", "big data", "data science"
+    ],
+    "frontend-react": [
+      "React", "TypeScript", "HTML", "CSS", "Jest", "React Testing Library", "Figma", "JavaScript",
+      "responsive design", "unit testing", "Git", "Next.js", "GraphQL", "web accessibility", "WCAG"
+    ],
+    "registered-nurse": [
+      "patient care", "medication administration", "IV therapy", "vital signs", "Epic Systems",
+      "patient education", "BLS", "ACLS", "electronic health records", "communication",
+      "critical thinking", "collaboration"
+    ]
+  },
+  "resumes": {
+    "dotnet-senior": [
+      ".NET", "SQL", "Azure", "REST API", "C#", "ASP.NET Core", "Microsoft SQL Server", "Docker",
+      "Azure Kubernetes Service", "Kubernetes", "Terraform", "Entity Framework", "RabbitMQ", "CI/CD",
+      "Azure DevOps", "ASP.NET MVC", "Git", "code review", "mentoring"
+    ],
+    "dotnet-junior": [
+      "C#", "ASP.NET MVC", "SQL", "Azure", "Azure App Service", "xUnit", "unit testing", "PowerShell",
+      "REST API", "ASP.NET Core", "Entity Framework", "SQLite", "ASP.NET", "Git", "HTML", "CSS"
+    ],
+    "java-backend": [
+      "Java", "microservices", "AWS", "Spring Boot", "REST API", "Docker", "Kubernetes", "EKS",
+      "PostgreSQL", "Spring", "Jenkins", "CI/CD", "Kafka", "Oracle Database", "SQL", "Git"
+    ],
+    "data-scientist": [
+      "Python", "scikit-learn", "pandas", "SQL", "Snowflake", "A/B testing", "Tableau", "deep learning",
+      "PyTorch", "logistic regression", "random forests", "statistics", "NumPy", "machine learning", "Git"
+    ],
+    "data-analyst": [
+      "Python", "Power BI", "SQL", "Microsoft Excel", "pandas", "statistics", "data visualization", "communication"
+    ],
+    "frontend-react": [
+      "React", "web accessibility", "TypeScript", "Next.js", "Jest", "React Testing Library", "unit testing",
+      "WCAG", "Figma", "JavaScript", "HTML", "CSS", "GraphQL", "Git"
+    ],
+    "bootcamp-frontend": [
+      "React", "JavaScript", "HTML", "CSS", "Netlify", "TypeScript", "Jest", "unit testing", "Git",
+      "scheduling", "inventory", "budgeting"
+    ],
+    "registered-nurse": [
+      "cardiac monitoring", "IV therapy", "medication administration", "Epic Systems", "patient care",
+      "patient education", "BLS", "ACLS"
+    ],
+    "medical-assistant": [
+      "vital signs", "Epic Systems", "phlebotomy", "EKG", "scheduling", "insurance verification", "CMA", "BLS",
+      "medical terminology"
+    ]
+  },
+  "pairs": [
+    { "job": "backend-dotnet", "resume": "dotnet-senior", "fit": "good" },
+    { "job": "backend-dotnet", "resume": "dotnet-junior", "fit": "potential" },
+    { "job": "backend-dotnet", "resume": "java-backend", "fit": "potential" },
+    { "job": "backend-dotnet", "resume": "data-scientist", "fit": "no" },
+    { "job": "backend-dotnet", "resume": "registered-nurse", "fit": "no" },
+
+    { "job": "data-scientist", "resume": "data-scientist", "fit": "good" },
+    { "job": "data-scientist", "resume": "data-analyst", "fit": "potential" },
+    { "job": "data-scientist", "resume": "frontend-react", "fit": "no" },
+    { "job": "data-scientist", "resume": "medical-assistant", "fit": "no" },
+    { "job": "data-scientist", "resume": "dotnet-senior", "fit": "no" },
+
+    { "job": "frontend-react", "resume": "frontend-react", "fit": "good" },
+    { "job": "frontend-react", "resume": "bootcamp-frontend", "fit": "potential" },
+    { "job": "frontend-react", "resume": "dotnet-senior", "fit": "no" },
+    { "job": "frontend-react", "resume": "registered-nurse", "fit": "no" },
+
+    { "job": "registered-nurse", "resume": "registered-nurse", "fit": "good" },
+    { "job": "registered-nurse", "resume": "medical-assistant", "fit": "potential" },
+    { "job": "registered-nurse", "resume": "data-analyst", "fit": "no" },
+    { "job": "registered-nurse", "resume": "bootcamp-frontend", "fit": "no" }
+  ]
+}

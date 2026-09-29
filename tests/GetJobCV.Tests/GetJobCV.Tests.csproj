@@ -21,4 +21,10 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Evaluation\labels.json;Evaluation\jobs\*.txt;Evaluation\resumes\*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
