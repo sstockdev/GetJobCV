@@ -398,13 +398,13 @@ namespace GetJobCV.UI
 
         private SkillChip Chip(SkillMatcher.ScoredSkill skill, ChipStyle style)
         {
-            SkillChip chip = new(skill.Name, skill.Tier, ReportText.Tag(skill), style) { Dashed = skill.Preferred };
+            SkillChip chip = new(ReportText.DisplayName(skill.Name), skill.Tier, ReportText.Tag(skill), style) { Dashed = skill.Preferred };
             string explanation = ReportText.Explanation(skill);
             _tips.SetToolTip(chip, explanation);
 
             // Keyboard focus gets the hover explanation too. It goes in the name because
             // screen readers always read the name; support for descriptions varies.
-            chip.AccessibleName = $"{skill.Name}. {explanation}";
+            chip.AccessibleName = $"{ReportText.DisplayName(skill.Name)}. {explanation}";
             chip.GotFocus += (_, _) => _tips.Show(explanation, chip, 0, chip.Height + 4, 5000);
             chip.LostFocus += (_, _) => _tips.Hide(chip);
             return chip;
@@ -430,7 +430,7 @@ namespace GetJobCV.UI
             {
                 LinkLabel link = new()
                 {
-                    Text = value,
+                    Text = ReportText.ShortUrl(value),
                     Font = Theme.Body(9.75f),
                     LinkColor = Theme.Accent,
                     ActiveLinkColor = Theme.Ink,

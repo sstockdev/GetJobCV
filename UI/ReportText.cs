@@ -130,7 +130,27 @@ namespace GetJobCV.UI
         /// "Most time with: SQL 6.3 yrs, .NET 4.8 yrs", or null without per-skill months.
         /// </summary>
         public static string? MostTimeWith(ExperienceSummary summary) => summary.SkillMonths.Count == 0 ? null
-            : "Most time with: " + string.Join(", ", summary.SkillMonths.Take(5).Select(s => $"{s.Skill} {s.Months / 12.0:0.#} yrs"));
+            : "Most time with: " + string.Join(", ", summary.SkillMonths.Take(5).Select(s => $"{DisplayName(s.Skill)} {s.Months / 12.0:0.#} yrs"));
+
+        /// <summary>
+        /// A skill name for display. Names written all in lowercase ("agile", "design
+        /// patterns") get a capital first letter to match the rest; others keep their casing
+        /// ("iOS", "CI/CD").
+        /// </summary>
+        public static string DisplayName(string skill) =>
+            skill.Length > 0 && !skill.Any(char.IsUpper) ? char.ToUpperInvariant(skill[0]) + skill[1..] : skill;
+
+        /// <summary>
+        /// A link as people write it: "https://www.linkedin.com/in/jane/" → "linkedin.com/in/jane".
+        /// </summary>
+        public static string ShortUrl(string url)
+        {
+            string s = url.Trim();
+            foreach (string prefix in new[] { "https://", "http://", "www." })
+                if (s.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    s = s[prefix.Length..];
+            return s.TrimEnd('/');
+        }
 
         /// <summary>
         /// A profile link as a web address ("github.com/jane" → https://github.com/jane).

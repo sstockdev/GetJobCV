@@ -132,7 +132,7 @@ namespace GetJobCV.UI
                 string notes = string.Join("; ", new[] { ReportText.Years(skill), ReportText.NiceToHave(skill) }.OfType<string>());
                 string evidence = ReportText.Evidence(skill);
                 html.Append($"""
-                          <tr{(skill.Preferred ? " class=\"nice\"" : "")}><th scope="row">{H(skill.Name)}</th><td>{demand}</td><td>{H(char.ToUpperInvariant(evidence[0]) + evidence[1..])}</td><td>{H(notes)}</td></tr>
+                          <tr{(skill.Preferred ? " class=\"nice\"" : "")}><th scope="row">{H(ReportText.DisplayName(skill.Name))}</th><td>{demand}</td><td>{H(char.ToUpperInvariant(evidence[0]) + evidence[1..])}</td><td>{H(notes)}</td></tr>
 
                     """);
             }
@@ -151,7 +151,7 @@ namespace GetJobCV.UI
             void Field(string label, string? value, string? url)
             {
                 string shown = value is null ? "<span class=\"muted\">—</span>"
-                    : url is not null && ReportText.WebUri(url) is { } uri ? $"<a href=\"{H(uri.AbsoluteUri)}\">{H(value)}</a>"
+                    : url is not null && ReportText.WebUri(url) is { } uri ? $"<a href=\"{H(uri.AbsoluteUri)}\">{H(ReportText.ShortUrl(value))}</a>"
                     : H(value);
                 html.Append($"    <dt>{label}</dt><dd>{shown}</dd>\n");
             }
@@ -160,7 +160,7 @@ namespace GetJobCV.UI
         private static void Experience(StringBuilder html, IReadOnlyList<ExperienceEntry> roles,
             ExperienceSummary summary, SkillMatcher.YearsCheck? required)
         {
-            html.Append("<div class=\"card\">\n  <h2>Experience</h2>\n");
+            html.Append("<div class=\"card experience\">\n  <h2>Experience</h2>\n");
             if (summary.TotalMonths > 0 || required is not null)
             {
                 html.Append($"  <p class=\"strong\">{summary.TotalYears:0.#} years of professional experience</p>\n");
@@ -278,13 +278,18 @@ namespace GetJobCV.UI
               main { padding: 0; max-width: none; gap: 14px; }
               .card { break-inside: avoid; border-color: #ccc; padding: 14px 18px; }
               .card.long { break-inside: auto; }
-              .group { break-after: avoid; }
+              h2, .group { break-after: avoid; }
+              .jd { orphans: 3; widows: 3; }
+              /* Three columns are too narrow on paper: Candidate and Education side by side,
+                 Experience across the page below them */
+              .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; gap: 14px; }
+              .grid .experience { grid-column: 1 / -1; }
               thead { display: table-header-group; }
               tr { break-inside: avoid; }
               /* Cards are narrow on paper: labels above values so emails and links don't split */
-              dl { grid-template-columns: 1fr; gap: 0; }
+              dl { grid-template-columns: 1fr; gap: 0; font-size: 12px; }
               dt { font-size: 11px; margin-top: 6px; }
-              dd { overflow-wrap: normal; }
+              dd { overflow-wrap: anywhere; }  /* only when a value still doesn't fit */
             }
 
             """;

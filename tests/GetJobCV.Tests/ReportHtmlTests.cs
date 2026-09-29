@@ -71,6 +71,24 @@ namespace GetJobCV.Tests
         }
 
         [Fact]
+        public void Shows_links_short_and_keeps_the_full_address()
+        {
+            string html = ReportHtml.Build(Input(new ContactInfo("Jane", null, null, null, "https://www.linkedin.com/in/jane-doe/")));
+            Assert.Contains("<a href=\"https://www.linkedin.com/in/jane-doe/\">linkedin.com/in/jane-doe</a>", html);
+        }
+
+        [Theory]
+        [InlineData("agile", "Agile")]
+        [InlineData("design patterns", "Design patterns")]
+        [InlineData("CI/CD", "CI/CD")]
+        [InlineData("iOS", "iOS")]
+        [InlineData(".NET", ".NET")]
+        public void Capitalizes_only_all_lowercase_skill_names(string name, string shown)
+        {
+            Assert.Equal(shown, ReportText.DisplayName(name));
+        }
+
+        [Fact]
         public void Loads_nothing_from_outside_the_file()
         {
             string html = ReportHtml.Build(Input());
