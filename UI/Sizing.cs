@@ -13,12 +13,13 @@ namespace GetJobCV.UI
         /// </summary>
         public static int HeightFor(Control control, int width) => control switch
         {
+            // Fixed-size controls first: the ring is a Label only for screen readers
+            ButtonBase or MeterBar or ScoreRing => control.Height,
             // Ellipsis labels stay on one line
             Label { AutoSize: false, AutoEllipsis: true } label => TextRenderer.MeasureText("Ag", label.Font).Height,
             // The label's own measurement wraps exactly the way it paints
             Label { AutoSize: false } label => label.GetPreferredSize(new Size(Math.Max(2, width), 0)).Height,
             FlowLayoutPanel flow => FlowHeight(flow, width),
-            ButtonBase or MeterBar or ScoreRing => control.Height,
             Panel { Controls.Count: 0 } => control.Height,
             _ => control.GetPreferredSize(new Size(width, 0)).Height,
         };
@@ -102,7 +103,6 @@ namespace GetJobCV.UI
         public const string Fill = "fill";
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public int Gap { get; set; }
 
         public Row()

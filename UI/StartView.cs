@@ -71,6 +71,8 @@ namespace GetJobCV.UI
             Controls.Add(center);
 
             _jobDescription.Box.PlaceholderText = "Paste the full posting, including requirements and nice-to-haves";
+            _jobDescription.Box.AccessibleName = "Job description";
+            _jobDescription.Box.AccessibleDescription = "Paste the full posting, including requirements and nice-to-haves";
             _jobDescription.Box.TextChanged += (_, _) => UpdateState();
             _browse.Click += (_, _) =>
             {
@@ -83,7 +85,6 @@ namespace GetJobCV.UI
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public string JobDescription
         {
             get => _jobDescription.Box.Text;
@@ -91,7 +92,6 @@ namespace GetJobCV.UI
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public string? ResumePath
         {
             get => _resumePath;
@@ -115,7 +115,6 @@ namespace GetJobCV.UI
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public bool ModelReady
         {
             get => _modelReady;
@@ -203,12 +202,14 @@ namespace GetJobCV.UI
         /// <summary>
         /// A dark circle with the step number.
         /// </summary>
-        private sealed class StepBadge : Control
+        private sealed class StepBadge : Label
         {
             public StepBadge(int number)
             {
                 SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+                AutoSize = false;
                 Text = number.ToString();
+                AccessibleName = $"Step {number}";
                 Font = Theme.Mono(9.75f);
                 Size = new Size(28, 28);
             }

@@ -68,12 +68,18 @@ namespace GetJobCV.UI
             Controls.Add(BuildRail());
 
             _jobDescription.Box.TextChanged += (_, _) => UpdateStaleNote();
+
+            // Names for screen readers where there's no visible label to read
+            _jobDescription.Box.AccessibleName = "Job description";
+            foreach ((Label _, FlowLayoutPanel chips, ChipStyle style) in _groups)
+                chips.AccessibleRole = AccessibleRole.List;
+            _sections.AccessibleName = "Sections found";
+            _sections.AccessibleRole = AccessibleRole.List;
         }
 
         public string JobDescription => _jobDescription.Box.Text;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public string? ResumePath
         {
             get => _resumePath;
@@ -210,6 +216,7 @@ namespace GetJobCV.UI
             rail.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             Button replace = Theme.Button("Replace", Theme.ButtonKind.Link);
+            replace.AccessibleName = "Replace resume";
             replace.Click += (_, _) =>
             {
                 if (Theme.BrowseForResume(this) is { } path)
@@ -225,6 +232,8 @@ namespace GetJobCV.UI
                 TextAlign = ContentAlignment.MiddleCenter,
                 Size = new Size(40, 48),
                 Margin = new Padding(0),
+                AccessibleRole = AccessibleRole.Graphic,
+                AccessibleName = "PDF file",
             };
             _fileName.AutoSize = false;
             _fileName.AutoEllipsis = true;
@@ -405,9 +414,11 @@ namespace GetJobCV.UI
         {
             (Label title, FlowLayoutPanel chips, ChipStyle style) = _groups[index];
             title.Text = $"{name}  {skills.Count}";
+            chips.AccessibleName = $"{name} skills, {skills.Count}";
             Replace(chips, skills.Count == 0
                 ? [Muted("None")]
                 : skills.Select(s => Chip(s, style)));
+            SkillChip.MakeGroupTabStop(chips);
         }
 
         private SkillChip Chip(SkillMatcher.ScoredSkill skill, ChipStyle style)
@@ -435,7 +446,14 @@ namespace GetJobCV.UI
                   (skill.Section is null ? "" : $", resume shows {skill.ShownMonths / 12.0:0.#}")
                 : "";
             string niceToHave = skill.Preferred ? $" · nice to have, counts {SkillMatcher.PreferredWeight:P0} of a required skill" : "";
-            _tips.SetToolTip(chip, $"{demand} · {evidence}{wanted}{niceToHave}");
+            string explanation = $"{demand} · {evidence}{wanted}{niceToHave}";
+            _tips.SetToolTip(chip, explanation);
+
+            // Keyboard focus gets the hover explanation too. It goes in the name because
+            // screen readers always read the name; support for descriptions varies.
+            chip.AccessibleName = $"{skill.Name}. {explanation}";
+            chip.GotFocus += (_, _) => _tips.Show(explanation, chip, 0, chip.Height + 4, 5000);
+            chip.LostFocus += (_, _) => _tips.Hide(chip);
             return chip;
         }
 

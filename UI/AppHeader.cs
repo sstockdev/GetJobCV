@@ -37,14 +37,16 @@ namespace GetJobCV.UI
         /// <summary>
         /// "GetJob" in ink and "CV" in the accent, drawn without the gap two labels leave.
         /// </summary>
-        private sealed class Wordmark : Control
+        private sealed class Wordmark : Label
         {
             private const TextFormatFlags Flags = TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter;
 
             public Wordmark()
             {
                 SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+                AutoSize = false;
                 Font = Theme.Display(16f);
+                Text = "GetJobCV";
                 Size = GetPreferredSize(Size.Empty);
             }
 

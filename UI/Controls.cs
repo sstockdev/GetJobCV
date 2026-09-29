@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing.Drawing2D;
+using System.Windows.Forms.Automation;
 
 namespace GetJobCV.UI
 {
@@ -79,7 +80,6 @@ namespace GetJobCV.UI
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public bool ReadOnly
         {
             get => Box.ReadOnly;
@@ -93,10 +93,16 @@ namespace GetJobCV.UI
         }
     }
 
+    // The drawn controls below derive from Label, not Control, for screen readers: WinForms
+    // only serves UI Automation for its own control types. A plain Control gets the generic
+    // window provider, a nameless "pane" that ignores AccessibleName and AccessibleRole.
+    // Each one paints itself entirely; Label's own text drawing is never used.
+
     /// <summary>
-    /// The status pill in the header: a colored dot and a short message.
+    /// The status pill in the header: a colored dot and a short message. A live region, so
+    /// screen readers announce each status ("Analyzing · step 3 of 7", errors).
     /// </summary>
-    internal sealed class Pill : Control
+    internal sealed class Pill : Label
     {
         public enum Kind { Ready, Loading, Working, Error }
 
@@ -106,7 +112,10 @@ namespace GetJobCV.UI
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+            AutoSize = false;
+            UseMnemonic = false;
             Font = Theme.Body(9.75f, FontStyle.Bold);
+            LiveSetting = AutomationLiveSetting.Polite;
         }
 
         public void Show(Kind kind, string text)
@@ -157,29 +166,39 @@ namespace GetJobCV.UI
     /// <summary>
     /// The overall score as a ring with the percentage in the middle.
     /// </summary>
-    internal sealed class ScoreRing : Control
+    internal sealed class ScoreRing : Label
     {
         private double _value;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public double Value
         {
             get => _value;
-            set { _value = Math.Clamp(value, 0, 1); Invalidate(); }
+            set
+            {
+                _value = Math.Clamp(value, 0, 1);
+                AccessibleName = $"Overall score {_value * 100:F0}%";
+                Invalidate();
+            }
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public Font NumberFont { get; set; } = Theme.Display(24f);
 
         public ScoreRing()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+            AutoSize = false;
+            UseMnemonic = false;
             Font = Theme.Body(8.25f);
             Size = new Size(124, 124);
         }
+
+        /// <summary>
+        /// Its set size; Label would measure its (empty) text.
+        /// </summary>
+        public override Size GetPreferredSize(Size proposedSize) => Size;
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -211,14 +230,13 @@ namespace GetJobCV.UI
     }
 
     /// <summary>
-    /// A thin horizontal progress bar.
+    /// A thin horizontal progress bar. Decorative: the percentage beside it is the text.
     /// </summary>
     internal sealed class MeterBar : Control
     {
         private double _value;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public double Value
         {
             get => _value;
@@ -256,7 +274,7 @@ namespace GetJobCV.UI
     /// One skill: a filled square for hot skills, a hollow one for in-demand skills,
     /// and an optional tag saying where it was found when that counts for less.
     /// </summary>
-    internal sealed class SkillChip : Control
+    internal sealed class SkillChip : Label
     {
         private readonly ChipStyle _style;
         private readonly int _tier;
@@ -267,6 +285,8 @@ namespace GetJobCV.UI
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+            AutoSize = false;
+            UseMnemonic = false;
             Text = name;
             _tier = tier;
             _tag = tag;
@@ -274,6 +294,13 @@ namespace GetJobCV.UI
             Font = Theme.Body(9.75f, FontStyle.Bold);
             Margin = new Padding(0, 0, 6, 6);
             Size = GetPreferredSize(Size.Empty);
+
+            // Focusable so keyboard users can reach the explanation mouse users get on hover.
+            // Only one chip per group is a tab stop; arrows move within the group.
+            SetStyle(ControlStyles.Selectable, true);
+            TabStop = false;
+            AccessibleRole = AccessibleRole.ListItem;
+            AccessibleName = name;
         }
 
         /// <summary>
@@ -281,6 +308,61 @@ namespace GetJobCV.UI
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Dashed { get; set; }
+
+        /// <summary>
+        /// Makes the first chip in <paramref name="group"/> its tab stop.
+        /// </summary>
+        public static void MakeGroupTabStop(Control group)
+        {
+            if (group.Controls.OfType<SkillChip>().FirstOrDefault() is { } first)
+                first.TabStop = true;
+        }
+
+        private List<SkillChip> Group => [.. Parent?.Controls.OfType<SkillChip>() ?? [this]];
+
+        protected override bool IsInputKey(Keys keyData) =>
+            keyData is Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End || base.IsInputKey(keyData);
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            List<SkillChip> group = Group;
+            int at = group.IndexOf(this);
+            int next = e.KeyCode switch
+            {
+                Keys.Left or Keys.Up => at - 1,
+                Keys.Right or Keys.Down => at + 1,
+                Keys.Home => 0,
+                Keys.End => group.Count - 1,
+                _ => -1,
+            };
+            if (next >= 0 && next < group.Count)
+            {
+                group[next].Focus();
+                e.Handled = true;
+            }
+        }
+
+        protected override void OnGotFocus(EventArgs e)
+        {
+            base.OnGotFocus(e);
+            // Tab comes back to the chip that was last focused
+            foreach (SkillChip chip in Group)
+                chip.TabStop = chip == this;
+            Invalidate();
+        }
+
+        protected override void OnLostFocus(EventArgs e)
+        {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            Focus();
+        }
 
         private int Marker => _tier > 0 ? LogicalToDeviceUnits(8) + LogicalToDeviceUnits(6) : 0;
 
@@ -308,6 +390,13 @@ namespace GetJobCV.UI
                     ? new(_style.Ink, 1.25f) { DashStyle = DashStyle.Dash }
                     : new(_style.Border);
                 g.DrawPath(border, path);
+            }
+
+            if (Focused && ShowFocusCues)
+            {
+                using GraphicsPath ring = Theme.RoundRect(new RectangleF(1.5f, 1.5f, Width - 3.5f, Height - 3.5f), LogicalToDeviceUnits(5));
+                using Pen focus = new(Theme.Accent, 2f);
+                g.DrawPath(focus, ring);
             }
 
             int x = LogicalToDeviceUnits(10);
@@ -344,7 +433,7 @@ namespace GetJobCV.UI
     /// <summary>
     /// The pipeline steps with a check for each finished one and a spinner on the current one.
     /// </summary>
-    internal sealed class StepList : Control
+    internal sealed class StepList : Label
     {
         private readonly System.Windows.Forms.Timer _spin = new() { Interval = 40 };
         private float _angle;
@@ -356,19 +445,29 @@ namespace GetJobCV.UI
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+            AutoSize = false;
+            UseMnemonic = false;
             Steps = steps;
             Font = Theme.Body(10.5f);
             _spin.Tick += (_, _) => { _angle = (_angle + 12) % 360; Invalidate(); };
+            Current = 0;
         }
 
         private int RowHeight => LogicalToDeviceUnits(52);
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-
         public int Current
         {
             get => _current;
-            set { _current = Math.Clamp(value, 0, Steps.Count); Invalidate(); }
+            set
+            {
+                _current = Math.Clamp(value, 0, Steps.Count);
+                // What the checks and spinner show, in words
+                AccessibleName = _current < Steps.Count
+                    ? $"Step {_current + 1} of {Steps.Count} in progress: {Steps[_current]}. {_current} done."
+                    : $"All {Steps.Count} steps done.";
+                Invalidate();
+            }
         }
 
         public override Size GetPreferredSize(Size proposedSize) =>
