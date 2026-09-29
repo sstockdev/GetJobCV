@@ -1,6 +1,7 @@
 using System.Text;
 using GetJobCV.Modules;
 using GetJobCV.UI;
+using Microsoft.Web.WebView2.Core;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Actions;
 using UglyToad.PdfPig.Annotations;
@@ -80,30 +81,41 @@ namespace GetJobCV
         }
 
         /// <summary>
-        /// Saves the report on screen as an HTML file.
+        /// Saves the report on screen as a PDF.
         /// </summary>
-        private void ExportReport()
+        private async void ExportReport()
         {
             if (_report is null)
                 return;
 
             using SaveFileDialog dialog = new()
             {
-                Filter = "Web page (*.html)|*.html",
-                FileName = $"{Path.GetFileNameWithoutExtension(_report.ResumeFileName)} report.html",
+                Filter = "PDF (*.pdf)|*.pdf",
+                FileName = $"{Path.GetFileNameWithoutExtension(_report.ResumeFileName)} report.pdf",
                 RestoreDirectory = true,
             };
             if (dialog.ShowDialog(this) != DialogResult.OK)
                 return;
 
+            string name = Path.GetFileName(dialog.FileName);
+            _header.ExportReport.Enabled = false;
+            _header.Status.Show(Pill.Kind.Working, $"Saving {name}");
             try
             {
-                File.WriteAllText(dialog.FileName, ReportHtml.Build(_report), new UTF8Encoding(false));
-                _header.Status.Show(Pill.Kind.Ready, $"Saved {Path.GetFileName(dialog.FileName)}");
+                await ReportPdf.SaveAsync(this, ReportHtml.Build(_report), dialog.FileName);
+                _header.Status.Show(Pill.Kind.Ready, $"Saved {name}");
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (WebView2RuntimeNotFoundException)
             {
-                _header.Status.Show(Pill.Kind.Error, $"Couldn't save the report ({ex.Message})");
+                _header.Status.Show(Pill.Kind.Error, "Saving a PDF needs the Microsoft Edge WebView2 Runtime");
+            }
+            catch (Exception ex)
+            {
+                _header.Status.Show(Pill.Kind.Error, $"Couldn't save {name} ({ex.Message})");
+            }
+            finally
+            {
+                _header.ExportReport.Enabled = true;
             }
         }
 

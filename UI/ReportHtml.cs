@@ -19,9 +19,9 @@ namespace GetJobCV.UI
         double Cosine);
 
     /// <summary>
-    /// Writes a report as one self-contained HTML file: no scripts, fonts, or images to
-    /// load, so it opens offline, prints cleanly, and can be sent as an attachment.
-    /// All resume and job description text is HTML-encoded.
+    /// Writes a report as one self-contained HTML page (no scripts, fonts, or images to
+    /// load), which <see cref="ReportPdf"/> prints to the exported PDF. All resume and job
+    /// description text is HTML-encoded.
     /// </summary>
     public static class ReportHtml
     {
@@ -72,7 +72,7 @@ namespace GetJobCV.UI
                   <p class="note">Overall blends {Pct(ScoreCombiner.DefaultCoverageWeight)} skill coverage with {Pct(ScoreCombiner.DefaultCosineWeight)} text similarity.</p>
                 </section>
 
-                <section class="card">
+                <section class="card long">
                   <h2>Skills</h2>
                   <p class="note">Demand is from O*NET. Skills only listed or mentioned count for less than skills shown in use, and nice-to-have skills count half.</p>
 
@@ -89,7 +89,7 @@ namespace GetJobCV.UI
             html.Append($"""
                 </section>
 
-                <section class="card">
+                <section class="card long">
                   <h2>Job description</h2>
                   <div class="jd">{H(input.JobDescription.Trim())}</div>
                 </section>
@@ -272,12 +272,19 @@ namespace GetJobCV.UI
             .tags li { background: var(--track); border-radius: 4px; padding: 2px 8px; font-size: 13px; }
             .jd { white-space: pre-wrap; font-size: 14px; margin-top: 10px; }
             footer { color: var(--muted); font-size: 13px; }
-            @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .summary { flex-direction: column; align-items: flex-start; } }
+            @media screen and (max-width: 760px) { .grid { grid-template-columns: 1fr; } .summary { flex-direction: column; align-items: flex-start; } }
             @media print {
               body { background: #fff; font-size: 12px; }
-              main { padding: 0; max-width: none; }
-              .card { break-inside: avoid; border-color: #ccc; }
+              main { padding: 0; max-width: none; gap: 14px; }
+              .card { break-inside: avoid; border-color: #ccc; padding: 14px 18px; }
+              .card.long { break-inside: auto; }
+              .group { break-after: avoid; }
+              thead { display: table-header-group; }
               tr { break-inside: avoid; }
+              /* Cards are narrow on paper: labels above values so emails and links don't split */
+              dl { grid-template-columns: 1fr; gap: 0; }
+              dt { font-size: 11px; margin-top: 6px; }
+              dd { overflow-wrap: normal; }
             }
 
             """;

@@ -1,0 +1,10 @@
+<Project>
+  <!-- The WebView2 package also references its WPF assembly, which pulls in a WindowsBase
+       that conflicts with WinForms (MSB3277). Only the WinForms control is used. Here rather
+       than in GetJobCV.csproj so projects that reference it (the tests) get it too. -->
+  <Target Name="RemoveWebView2Wpf" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+</Project>

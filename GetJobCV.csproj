@@ -12,6 +12,7 @@
     <PackageReference Include="Catalyst" Version="26.6.2084" />
     <PackageReference Include="Catalyst.Models.English" Version="1.0.30952" />
     <PackageReference Include="MessagePack" Version="3.1.7" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
     <PackageReference Include="NuGet.CommandLine" Version="5.11.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
