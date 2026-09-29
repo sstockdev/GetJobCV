@@ -16,7 +16,18 @@ namespace GetJobCV.Modules
     {
         private readonly Pipeline _pipeline;
 
-        private NerExtractor(Pipeline pipeline) => _pipeline = pipeline;
+        /// <summary>
+        /// Every gazetteer entry, used to decide which slashed tokens hold skills.
+        /// </summary>
+        private readonly HashSet<string> _skills;
+        private readonly HashSet<string> _exactSkills;
+
+        private NerExtractor(Pipeline pipeline, HashSet<string> skills, HashSet<string> exactSkills)
+        {
+            _pipeline = pipeline;
+            _skills = skills;
+            _exactSkills = exactSkills;
+        }
 
         /// <summary>
         /// Builds once. Downloads English + WikiNER models on first run
@@ -26,7 +37,7 @@ namespace GetJobCV.Modules
         /// <param name="caseSensitiveSkills">skills that collide with ordinary words
         /// (CAN vs "can"), so only match with exact case</param>
         public static async Task<NerExtractor> CreateAsync(
-            IEnumerable<string> skills, IEnumerable<string>? caseSensitiveSkills = null)
+            IEnumerable<string> skills, IEnumerable<string> caseSensitiveSkills)
         {
             English.Register();
 
@@ -36,21 +47,23 @@ namespace GetJobCV.Modules
             pipeline.Add(await AveragePerceptronEntityRecognizer.FromStoreAsync(
                 language: Language.English, version: Version.Latest, tag: "WikiNER"));
 
-            // Gazetteer: tokens matching a skill phrase get entity type "Skill".
-            // Entries get the same slash padding as the text, so "ci/cd" still matches.
-            Spotter skillSpotter = new(Language.Any, 0, "skills", "Skill");
-            skillSpotter.Data.IgnoreCase = true;
-            foreach (string skill in skills)
-                skillSpotter.AddEntry(PadSlashes(skill));
-            pipeline.Add(skillSpotter);
+            HashSet<string> skillSet = new(skills, StringComparer.OrdinalIgnoreCase);
+            HashSet<string> exactSet = new(caseSensitiveSkills, StringComparer.Ordinal);
 
-            Spotter exactSpotter = new(Language.Any, 0, "skills-exact", "Skill");
-            exactSpotter.Data.IgnoreCase = false;
-            foreach (string skill in caseSensitiveSkills ?? [])
-                exactSpotter.AddEntry(PadSlashes(skill));
-            pipeline.Add(exactSpotter);
+            // Gazetteer: tokens matching a skill phrase get entity type "Skill"
+            pipeline.Add(CreateSpotter("skills", ignoreCase: true, skillSet));
+            pipeline.Add(CreateSpotter("skills-exact", ignoreCase: false, exactSet));
 
-            return new NerExtractor(pipeline);
+            return new NerExtractor(pipeline, skillSet, exactSet);
+        }
+
+        private static Spotter CreateSpotter(string tag, bool ignoreCase, IEnumerable<string> entries)
+        {
+            Spotter spotter = new(Language.Any, 0, tag, "Skill");
+            spotter.Data.IgnoreCase = ignoreCase;
+            foreach (string entry in entries)
+                spotter.AddEntry(entry);
+            return spotter;
         }
 
         /// <summary>
@@ -64,7 +77,7 @@ namespace GetJobCV.Modules
             if (string.IsNullOrWhiteSpace(rawText))
                 return NerResult.Empty;
 
-            Document doc = new(PadSlashes(rawText), Language.English);
+            Document doc = new(SplitSlashedSkills(rawText), Language.English);
             _pipeline.ProcessSingle(doc);
 
             HashSet<string> people = new(StringComparer.OrdinalIgnoreCase);
@@ -80,8 +93,7 @@ namespace GetJobCV.Modules
                     case "Person": people.Add(e.Value); break;
                     case "Organization": orgs.Add(e.Value); break;
                     case "Location": locations.Add(e.Value); break;
-                    // Undo the slash padding so "CI / CD" reads as "CI/CD"
-                    case "Skill": skills.Add(e.Value.Replace(" / ", "/")); break;
+                    case "Skill": skills.Add(e.Value); break;
                 }
             }
 
@@ -94,16 +106,28 @@ namespace GetJobCV.Modules
         }
 
         /// <summary>
-        /// Catalyst's tokenizer doesn't split on '/', so "C/C++" or "C#/.NET" would
-        /// be one token and the skill spotter would never see C++ or C#.
-        /// URLs are left alone so "https://..." doesn't turn into an "https" skill.
+        /// Catalyst's tokenizer doesn't split on '/', so "C/C++" or "C#/.NET" would be
+        /// one token and the spotter would never see C++ or C#. Split a slashed token
+        /// only when a part is a known skill and the whole token isn't one ("CI/CD").
+        /// URLs and paths ("github.com/user") have no skill parts, so they stay intact.
         /// </summary>
-        private static string PadSlashes(string text) =>
-            SlashOrUrlRegex().Replace(text, m => m.Groups["url"].Success ? m.Value : " / ");
+        private string SplitSlashedSkills(string text) =>
+            SlashedTokenRegex().Replace(text, m =>
+            {
+                string core = m.Value.TrimStart('(').TrimEnd(',', ';', ':', ')', '.');
+                if (IsSkill(core) || !core.Split('/').Any(IsSkill))
+                    return m.Value;
+                return m.Value.Replace("/", " / ");
+            });
 
-        [GeneratedRegex(@"(?<url>\b(?:https?://|www\.)\S+|\b[\w-]+\.(?:com|org|net|io|dev|edu|gov)/\S*)|(?<=\S)/(?=\S)",
-            RegexOptions.IgnoreCase)]
-        private static partial Regex SlashOrUrlRegex();
+        private bool IsSkill(string text) => _skills.Contains(text) || _exactSkills.Contains(text);
+
+        /// <summary>
+        /// A whitespace-delimited token with slashes between non-empty parts.
+        /// "//" in a URL scheme never matches.
+        /// </summary>
+        [GeneratedRegex(@"(?<!\S)[^\s/]+(?:/[^\s/]+)+(?!\S)")]
+        private static partial Regex SlashedTokenRegex();
 
         /// <summary>
         /// Entities pulled from a resume. De-duped.

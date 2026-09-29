@@ -9,10 +9,12 @@
 # --- Programming languages ---
 java
 golang
+=Rust
 rust lang
 rustlang
 matlab
 objective-c
+=Dart
 dart lang
 dartlang
 elixir
