@@ -13,7 +13,8 @@ namespace GetJobCV.Tests
         {
             // The gazetteer is read from Resources/ relative to the working directory
             Environment.CurrentDirectory = AppContext.BaseDirectory;
-            Ner = NerExtractor.CreateAsync(SkillsGazetteer.Load(), SkillsGazetteer.LoadCaseSensitive())
+            Ner = NerExtractor.CreateAsync(
+                    SkillsGazetteer.Load(), SkillsGazetteer.LoadCaseSensitive(), SkillsGazetteer.LoadAliases())
                 .GetAwaiter().GetResult();
         }
     }
@@ -27,6 +28,8 @@ namespace GetJobCV.Tests
         [InlineData("3+ years of C#.", "C#")]
         [InlineData("Strong C++, plus Python.", "C++")]
         [InlineData("We use C# and F#; also SQL.", "C#")]
+        [InlineData("3+ years of JS.", "JavaScript")]
+        [InlineData("Deploys to k8s.", "Kubernetes")]
         public void Keeps_symbol_skills_before_punctuation(string text, string skill)
         {
             IReadOnlyList<string> skills = _ner.Extract(text).Skills;

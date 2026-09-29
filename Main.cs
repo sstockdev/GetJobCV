@@ -76,7 +76,7 @@ namespace GetJobCV
             {
                 _skillTiers = SkillsGazetteer.LoadWeights();
                 _ner = await NerExtractor.CreateAsync(
-                    SkillsGazetteer.Load(), SkillsGazetteer.LoadCaseSensitive());
+                    SkillsGazetteer.Load(), SkillsGazetteer.LoadCaseSensitive(), SkillsGazetteer.LoadAliases());
                 _header.Status.Show(Pill.Kind.Ready, "Ready · models loaded");
                 _start.ModelReady = true;
             }

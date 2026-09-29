@@ -22,11 +22,18 @@ namespace GetJobCV.Modules
         private readonly HashSet<string> _skills;
         private readonly HashSet<string> _exactSkills;
 
-        private NerExtractor(Pipeline pipeline, HashSet<string> skills, HashSet<string> exactSkills)
+        /// <summary>
+        /// Alias to the name it's reported as ("JS" → "JavaScript")
+        /// </summary>
+        private readonly IReadOnlyDictionary<string, string> _aliases;
+
+        private NerExtractor(Pipeline pipeline, HashSet<string> skills, HashSet<string> exactSkills,
+            IReadOnlyDictionary<string, string> aliases)
         {
             _pipeline = pipeline;
             _skills = skills;
             _exactSkills = exactSkills;
+            _aliases = aliases;
         }
 
         /// <summary>
@@ -36,8 +43,10 @@ namespace GetJobCV.Modules
         /// <param name="skills">skills gazetteer, matched case-insensitively</param>
         /// <param name="caseSensitiveSkills">skills that collide with ordinary words
         /// (CAN vs "can"), so only match with exact case</param>
+        /// <param name="aliases">alias to canonical name, from <see cref="SkillsGazetteer.LoadAliases"/></param>
         public static async Task<NerExtractor> CreateAsync(
-            IEnumerable<string> skills, IEnumerable<string> caseSensitiveSkills)
+            IEnumerable<string> skills, IEnumerable<string> caseSensitiveSkills,
+            IReadOnlyDictionary<string, string>? aliases = null)
         {
             English.Register();
 
@@ -54,7 +63,8 @@ namespace GetJobCV.Modules
             pipeline.Add(CreateSpotter("skills", ignoreCase: true, skillSet));
             pipeline.Add(CreateSpotter("skills-exact", ignoreCase: false, exactSet));
 
-            return new NerExtractor(pipeline, skillSet, exactSet);
+            return new NerExtractor(pipeline, skillSet, exactSet,
+                new Dictionary<string, string>(aliases ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase));
         }
 
         private static Spotter CreateSpotter(string tag, bool ignoreCase, IEnumerable<string> entries)
@@ -84,6 +94,8 @@ namespace GetJobCV.Modules
             HashSet<string> orgs = new(StringComparer.OrdinalIgnoreCase);
             HashSet<string> locations = new(StringComparer.OrdinalIgnoreCase);
             HashSet<string> skills = new(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> written = new(StringComparer.OrdinalIgnoreCase);
+            List<SkillMention> mentions = [];
 
             foreach (var e in doc.SelectMany(span => span.GetEntities()))
             {
@@ -93,17 +105,33 @@ namespace GetJobCV.Modules
                     case "Person": people.Add(e.Value); break;
                     case "Organization": orgs.Add(e.Value); break;
                     case "Location": locations.Add(e.Value); break;
-                    case "Skill": skills.Add(e.Value); break;
+                    case "Skill":
+                        string name = Canonical(e.Value);
+                        skills.Add(name);
+                        if (written.Add(e.Value))
+                            mentions.Add(new SkillMention(name, e.Value));
+                        break;
                 }
             }
 
-            // remove skills from people / orgs / locations
-            people.ExceptWith(skills);
-            orgs.ExceptWith(skills);
-            locations.ExceptWith(skills);
+            // remove skills from people / orgs / locations, as written and as named
+            foreach (HashSet<string> set in new[] { people, orgs, locations })
+            {
+                set.ExceptWith(skills);
+                set.ExceptWith(written);
+            }
 
-            return new NerResult([.. people], [.. orgs], [.. locations], [.. skills]);
+            return new NerResult([.. people], [.. orgs], [.. locations], [.. skills], mentions);
         }
+
+        /// <summary>
+        /// The name a spotted skill is reported as: its alias target, or itself.
+        /// </summary>
+        private string Canonical(string written) =>
+            _aliases.TryGetValue(WhitespaceRegex().Replace(written.Trim(), " "), out string? name) ? name : written;
+
+        [GeneratedRegex(@"\s+")]
+        private static partial Regex WhitespaceRegex();
 
         /// <summary>
         /// Catalyst's tokenizer doesn't split on '/', so "C/C++" or "C#/.NET" would be
@@ -123,14 +151,14 @@ namespace GetJobCV.Modules
         private bool IsSkill(string text) => _skills.Contains(text) || _exactSkills.Contains(text);
 
         /// <summary>
-        /// Catalyst splits "C#." at the end of a sentence into "C" and "#.", so the spotter
-        /// finds C instead of C#. Space off punctuation that follows a '#' or '+' at the end
-        /// of a word ("C#." → "C# .", "C++," → "C++ ,").
+        /// Catalyst splits "C#." at the end of a sentence into "C" and "#.", and keeps "JS."
+        /// whole like an abbreviation, so the spotter finds C or nothing. Space off
+        /// punctuation at the end of a word ("C#." → "C# .", "JS." → "JS .", "C++," → "C++ ,").
         /// </summary>
         private static string DetachTrailingPunctuation(string text) =>
             TrailingPunctuationRegex().Replace(text, " $0");
 
-        [GeneratedRegex(@"(?<=[#+])[.,;:!?)]+(?=\s|$)")]
+        [GeneratedRegex(@"(?<=[\p{L}\p{N}#+])[.,;:!?)]+(?=\s|$)")]
         private static partial Regex TrailingPunctuationRegex();
 
         /// <summary>
@@ -141,13 +169,23 @@ namespace GetJobCV.Modules
         private static partial Regex SlashedTokenRegex();
 
         /// <summary>
+        /// A skill as found in the text.
+        /// </summary>
+        /// <param name="Name">The name it's reported under, aliases resolved</param>
+        /// <param name="Text">How it was written, e.g. "JS" for JavaScript</param>
+        public sealed record SkillMention(string Name, string Text);
+
+        /// <summary>
         /// Entities pulled from a resume. De-duped.
         /// </summary>
+        /// <param name="Skills">Skill names, aliases resolved ("JS" is reported as "JavaScript")</param>
+        /// <param name="SkillMentions">Each skill as written, for finding it in the text</param>
         public sealed record NerResult(
             IReadOnlyList<string> People,
             IReadOnlyList<string> Organizations,
             IReadOnlyList<string> Locations,
-            IReadOnlyList<string> Skills)
+            IReadOnlyList<string> Skills,
+            IReadOnlyList<SkillMention>? SkillMentions = null)
         {
             public static readonly NerResult Empty = new([], [], [], []);
 
@@ -162,6 +200,7 @@ namespace GetJobCV.Modules
                 HashSet<string> orgs = new(StringComparer.OrdinalIgnoreCase);
                 HashSet<string> locations = new(StringComparer.OrdinalIgnoreCase);
                 HashSet<string> skills = new(StringComparer.OrdinalIgnoreCase);
+                List<SkillMention> mentions = [];
 
                 foreach (NerResult r in results)
                 {
@@ -169,13 +208,15 @@ namespace GetJobCV.Modules
                     orgs.UnionWith(r.Organizations);
                     locations.UnionWith(r.Locations);
                     skills.UnionWith(r.Skills);
+                    mentions.AddRange(r.SkillMentions ?? []);
                 }
 
                 people.ExceptWith(skills);
                 orgs.ExceptWith(skills);
                 locations.ExceptWith(skills);
 
-                return new NerResult([.. people], [.. orgs], [.. locations], [.. skills]);
+                return new NerResult([.. people], [.. orgs], [.. locations], [.. skills],
+                    [.. mentions.DistinctBy(m => m.Text, StringComparer.OrdinalIgnoreCase)]);
             }
         }
     }

@@ -46,10 +46,16 @@ namespace GetJobCV.Modules
         /// no skill is an overall requirement if the clause mentions experience.
         /// </summary>
         public static JobRequirements Extract(string jobDescription, NerExtractor ner) =>
-            Extract(jobDescription, clause => ner.Extract(clause).Skills);
+            Extract(jobDescription, clause => ner.Extract(clause).SkillMentions ?? []);
 
-        /// <param name="findSkills">Skills in one clause; NER in the app, a stub in tests</param>
-        public static JobRequirements Extract(string jobDescription, Func<string, IEnumerable<string>> findSkills)
+        /// <param name="findSkills">Skills in one clause, written as named; a stub in tests</param>
+        public static JobRequirements Extract(string jobDescription, Func<string, IEnumerable<string>> findSkills) =>
+            Extract(jobDescription, clause => findSkills(clause).Select(s => new NerExtractor.SkillMention(s, s)));
+
+        /// <param name="findMentions">Skills in one clause, with how each is written, so
+        /// "3+ years of JS" is found as "JS" and reported as JavaScript</param>
+        public static JobRequirements Extract(
+            string jobDescription, Func<string, IEnumerable<NerExtractor.SkillMention>> findMentions)
         {
             List<YearsRequirement> all = [];
 
@@ -60,15 +66,15 @@ namespace GetJobCV.Modules
                     continue;
 
                 HashSet<Match> claimed = [];
-                foreach (string skill in findSkills(clause))
+                foreach (NerExtractor.SkillMention skill in findMentions(clause))
                 {
-                    int at = WholeWordIndex(clause, skill);
+                    int at = WholeWordIndex(clause, skill.Text);
                     if (at < 0)
                         continue;
 
-                    Match nearest = mentions.MinBy(m => Distance(m, at, skill.Length))!;
+                    Match nearest = mentions.MinBy(m => Distance(m, at, skill.Text.Length))!;
                     claimed.Add(nearest);
-                    all.Add(new YearsRequirement(skill, ParseYears(nearest), nearest.Value.Trim()));
+                    all.Add(new YearsRequirement(skill.Name, ParseYears(nearest), nearest.Value.Trim()));
                 }
 
                 if (!clause.Contains("experience", StringComparison.OrdinalIgnoreCase))

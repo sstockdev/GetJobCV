@@ -2,21 +2,16 @@
 # Matching is case-insensitive (Spotter.IgnoreCase = true).
 # These are the short forms, abbreviations, and tech names that the bundled O*NET
 # base (Resources/onet_skills.tsv) does NOT contain. Merged with it in
-# SkillsGazetteer.Load(). Optional "alias<TAB>canonical" lines are also supported.
+# SkillsGazetteer.Load(). "alias<TAB>Canonical" lines are at the end.
 # Lines starting with '=' match case-sensitively, for skills that collide with
 # ordinary words or letters (=CAN vs "can", =C vs "c").
 
 # --- Programming languages ---
 java
-golang
 =Rust
-rust lang
-rustlang
 matlab
 objective-c
 =Dart
-dart lang
-dartlang
 elixir
 erlang
 clojure
@@ -41,17 +36,13 @@ apex
 
 # --- Web frontend ---
 html
-html5
 css
-css3
 sass
 scss
 less
 tailwind css
-react.js
 redux
 next.js
-vue
 nuxt.js
 angular
 angularjs
@@ -76,13 +67,10 @@ web accessibility
 
 # --- Backend and frameworks ---
 express
-express.js
-nest.js
 fastapi
 spring
 .net
 asp.net
-asp.net core
 entity framework
 laravel
 symfony
@@ -138,11 +126,7 @@ supabase
 
 # --- Cloud ---
 aws
-amazon web services
 azure
-microsoft azure
-google cloud platform
-gcp
 ec2
 s3
 aws lambda
@@ -204,7 +188,6 @@ gitops
 machine learning
 deep learning
 neural networks
-natural language processing
 nlp
 computer vision
 reinforcement learning
@@ -239,7 +222,6 @@ predictive modeling
 a/b testing
 generative ai
 llm
-large language models
 prompt engineering
 recommender systems
 
@@ -480,3 +462,151 @@ software testing
 software validation
 source control
 version control
+
+# --- Canonical names for aliases below ---
+=Go
+=Spark
+=Hive
+maven
+tomcat
+sagemaker
+salesforce
+google cloud
+
+# --- Aliases: alias<TAB>Canonical ---
+# The alias is spotted and reported as the canonical name, and the canonical name takes
+# the highest O*NET demand tier of its aliases ("SQL" gets the tier of
+# "Structured query language SQL"). The canonical name is only spotted itself if it's
+# listed on its own line or in O*NET. Aliases don't chain.
+
+# Languages
+golang	Go
+rust lang	Rust
+rustlang	Rust
+dart lang	Dart
+dartlang	Dart
+c sharp	C#
+csharp	C#
+cpp	C++
+c plus plus	C++
+python3	Python
+python 3	Python
+objc	Objective-C
+obj-c	Objective-C
+Oracle Java	Java
+Structured query language SQL	SQL
+Transact-SQL	T-SQL
+tsql	T-SQL
+Oracle PL/SQL	PL/SQL
+The MathWorks MATLAB	MATLAB
+Microsoft PowerShell	PowerShell
+Microsoft Visual Basic	Visual Basic
+Shell script	Shell Scripting
+
+# Web
+js	JavaScript
+ecmascript	JavaScript
+es6	JavaScript
+Hypertext markup language HTML	HTML
+html5	HTML
+Cascading style sheets CSS	CSS
+css3	CSS
+react.js	React
+reactjs	React
+react js	React
+vue	Vue.js
+vuejs	Vue.js
+vue js	Vue.js
+Google Angular	Angular
+nextjs	Next.js
+next js	Next.js
+nuxtjs	Nuxt.js
+nodejs	Node.js
+node js	Node.js
+express.js	Express
+expressjs	Express
+nest.js	NestJS
+nestjs	NestJS
+tailwind	Tailwind CSS
+tailwindcss	Tailwind CSS
+
+# Backend
+Microsoft .NET Framework	.NET
+.net framework	.NET
+.net core	.NET
+dotnet	.NET
+Microsoft ASP.NET	ASP.NET
+asp.net core	ASP.NET
+Microsoft ASP.NET Core MVC	ASP.NET
+Spring Framework	Spring
+springboot	Spring Boot
+restful api	REST API
+restful apis	REST API
+rest apis	REST API
+
+# Data
+postgres	PostgreSQL
+pgsql	PostgreSQL
+mongo	MongoDB
+Apache Cassandra	Cassandra
+elastic search	Elasticsearch
+mssql	Microsoft SQL Server
+ms sql	Microsoft SQL Server
+ms sql server	Microsoft SQL Server
+Apache Kafka	Kafka
+Apache Spark	Spark
+Apache Airflow	Airflow
+Apache Hadoop	Hadoop
+Apache Hive	Hive
+Apache Maven	Maven
+Apache Tomcat	Tomcat
+Apache JMeter	JMeter
+Apache Subversion SVN	SVN
+Microsoft Power BI	Power BI
+ms excel	Microsoft Excel
+sklearn	Scikit-learn
+scikit learn	Scikit-learn
+natural language processing	NLP
+large language models	LLM
+large language model	LLM
+llms	LLM
+=ML	Machine Learning
+
+# Cloud
+amazon web services	AWS
+Amazon Web Services AWS software	AWS
+Amazon Elastic Compute Cloud EC2	EC2
+amazon ec2	EC2
+Amazon Elastic Container Service ECS	ECS
+Amazon Web Services AWS CloudFormation	CloudFormation
+aws cloudformation	CloudFormation
+Amazon Web Services AWS SageMaker	SageMaker
+aws sagemaker	SageMaker
+amazon s3	S3
+aws s3	S3
+microsoft azure	Azure
+Microsoft Azure software	Azure
+Microsoft Azure DevOps Services	Azure DevOps
+google cloud platform	Google Cloud
+gcp	Google Cloud
+Google Cloud software	Google Cloud
+
+# DevOps and tools
+k8s	Kubernetes
+IBM Terraform	Terraform
+Ansible software	Ansible
+Red Hat Ansible Engine	Ansible
+Jenkins CI	Jenkins
+gitlab ci/cd	GitLab CI
+Atlassian JIRA	Jira
+Atlassian Confluence	Confluence
+Atlassian Bitbucket	Bitbucket
+vscode	VS Code
+visual studio code	VS Code
+Microsoft Visual Studio	Visual Studio
+intellij	IntelliJ IDEA
+rhel	Red Hat Enterprise Linux
+oop	Object-Oriented Programming
+object oriented programming	Object-Oriented Programming
+Salesforce software	Salesforce
+Salesforce.com Salesforce CRM	Salesforce

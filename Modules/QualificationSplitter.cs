@@ -17,11 +17,16 @@ namespace GetJobCV.Modules
         /// mentioned as required anywhere is required.
         /// </summary>
         public static IReadOnlySet<string> PreferredSkills(string jobDescription, NerExtractor ner) =>
-            PreferredSkills(jobDescription, clause => ner.Extract(clause).Skills);
+            PreferredSkills(jobDescription, clause => ner.Extract(clause).SkillMentions ?? []);
 
-        /// <param name="findSkills">Skills in one clause; NER in the app, a stub in tests</param>
+        /// <param name="findSkills">Skills in one clause, written as named; a stub in tests</param>
         public static IReadOnlySet<string> PreferredSkills(
-            string jobDescription, Func<string, IEnumerable<string>> findSkills)
+            string jobDescription, Func<string, IEnumerable<string>> findSkills) =>
+            PreferredSkills(jobDescription, clause => findSkills(clause).Select(s => new NerExtractor.SkillMention(s, s)));
+
+        /// <param name="findMentions">Skills in one clause, with how each is written</param>
+        public static IReadOnlySet<string> PreferredSkills(
+            string jobDescription, Func<string, IEnumerable<NerExtractor.SkillMention>> findMentions)
         {
             HashSet<string> preferred = new(StringComparer.OrdinalIgnoreCase);
             HashSet<string> required = new(StringComparer.OrdinalIgnoreCase);
@@ -57,9 +62,9 @@ namespace GetJobCV.Modules
                         .. RequiredCueRegex().Matches(clause).Select(m => (m.Index, false)),
                     ];
 
-                    foreach (string skill in findSkills(clause))
+                    foreach (NerExtractor.SkillMention skill in findMentions(clause))
                     {
-                        int at = RequirementExtractor.WholeWordIndex(clause, skill);
+                        int at = RequirementExtractor.WholeWordIndex(clause, skill.Text);
                         if (at < 0)
                             continue;
 
@@ -67,7 +72,7 @@ namespace GetJobCV.Modules
                         bool isPreferred = cues.Count == 0
                             ? inPreferredSection
                             : cues.MinBy(c => Math.Abs(c.At - at)).Preferred;
-                        (isPreferred ? preferred : required).Add(skill);
+                        (isPreferred ? preferred : required).Add(skill.Name);
                     }
                 }
             }

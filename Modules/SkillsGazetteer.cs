@@ -46,16 +46,46 @@ namespace GetJobCV.Modules
                 .Distinct(StringComparer.Ordinal)];
 
         /// <summary>
-        /// Converts O*NET skill to demand tier
+        /// Converts O*NET skill to demand tier. A canonical name takes the highest tier of
+        /// its aliases, so "AWS" gets the tier of "Amazon Web Services AWS software".
         /// </summary>
-        public static IReadOnlyDictionary<string, int> LoadWeights(string path = DefaultPath)
+        public static IReadOnlyDictionary<string, int> LoadWeights(string path = DefaultPath, string overlayPath = OverlayPath)
         {
             Dictionary<string, int> tiers = new(StringComparer.OrdinalIgnoreCase);
             foreach (SkillEntry e in LoadCategorized(path))
                 if (!tiers.TryGetValue(e.Name, out int existing) || e.Weight > existing)
                     tiers[e.Name] = e.Weight;
+
+            foreach ((string alias, string canonical) in LoadAliases(overlayPath))
+                if (tiers.TryGetValue(alias, out int tier) && tier > tiers.GetValueOrDefault(canonical))
+                    tiers[canonical] = tier;
             return tiers;
         }
+
+        /// <summary>
+        /// Overlay "alias&lt;TAB&gt;Canonical" lines: alias (without any '=' prefix) to the
+        /// name it's reported as. Case-insensitive keys. Aliases don't chain.
+        /// </summary>
+        public static IReadOnlyDictionary<string, string> LoadAliases(string overlayPath = OverlayPath)
+        {
+            Dictionary<string, string> aliases = new(StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(overlayPath)) return aliases;
+            foreach (string line in ReadDataLines(overlayPath))
+            {
+                int tab = line.IndexOf('\t');
+                if (tab < 0) continue;
+                string alias = line[..tab].Trim().TrimStart(CaseSensitivePrefix).Trim();
+                string canonical = line[(tab + 1)..].Trim();
+                if (alias.Length > 0 && canonical.Length > 0)
+                    aliases[alias] = canonical;
+            }
+            return aliases;
+        }
+
+        private static IEnumerable<string> ReadDataLines(string path) =>
+            File.ReadLines(path, Encoding.UTF8)
+                .Select(l => l.Trim())
+                .Where(l => l.Length > 0 && !l.StartsWith('#'));
 
         /// <summary>
         /// O*Net base entries with their categories and weights
@@ -63,29 +93,20 @@ namespace GetJobCV.Modules
         public static IReadOnlyList<SkillEntry> LoadCategorized(string path = DefaultPath)
         {
             if (!File.Exists(path)) return [];
-            return [.. File.ReadLines(path, Encoding.UTF8)
-                .Select(l => l.Trim())
-                .Where(l => l.Length > 0 && !l.StartsWith('#'))
-                .Select(ParseLine)];
+            return [.. ReadDataLines(path).Select(ParseLine)];
         }
 
+        /// <summary>
+        /// Overlay names to spot. An alias line contributes only its alias: the canonical
+        /// name is spotted only if it's listed on its own ("golang&lt;TAB&gt;Go" must not
+        /// make every "go" a skill; "=Go" does that, case-sensitively).
+        /// </summary>
         private static IEnumerable<string> LoadOverlay(string path)
         {
             if (!File.Exists(path)) return [];
-            return [.. File.ReadLines(path, Encoding.UTF8)
-                .Select(l => l.Trim())
-                .Where(l => l.Length > 0 && !l.StartsWith('#'))
-                .SelectMany(SplitOverlay)];
-        }
-
-        private static IEnumerable<string> SplitOverlay(string line)
-        {
-            int tab = line.IndexOf('\t');
-            if (tab < 0) { yield return line; yield break; }
-            string alias = line[..tab].Trim();
-            string canon = line[(tab + 1)..].Trim();
-            if (alias.Length > 0) yield return alias;
-            if (canon.Length > 0) yield return canon;
+            return [.. ReadDataLines(path)
+                .Select(l => l.Split('\t')[0].Trim())
+                .Where(l => l.Length > 0)];
         }
 
         private static SkillEntry ParseLine(string line)

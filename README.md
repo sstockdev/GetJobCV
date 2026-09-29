@@ -31,7 +31,8 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 - [x] Extract GitHub and LinkedIn socials
 - [x] Structured resume record: name, contact, education (degree, school, dates), job titles, companies, dates [P III.A]
 - [x] Years of experience, overall and per skill ("Skills and Experience showed significantly improved shortlisting") [C Section 6]
-- [ ] Skill aliases → canonical names (JS → JavaScript, Git → source control)
+- [x] Skill aliases → canonical names (JS → JavaScript, k8s → Kubernetes), taking the O\*NET demand tier of any alias (`alias<TAB>Canonical` lines in `Resources/skills.txt`)
+- [ ] Skill hierarchy: a specific skill implies a general one (Git → source control, SQL Server → SQL)
 - [ ] Parse the GitHub profile via the public API: repo languages and topics as a second skill source [C Fig. 1]
 - [ ] Parse a LinkedIn profile from a user-supplied export (LinkedIn has no public profile API) [C Fig. 1]
 - [ ] Merge CV, GitHub, and LinkedIn skill sets into one candidate skill set with its source for each skill [C Fig. 1]
