@@ -348,6 +348,8 @@ namespace GetJobCV.UI
             return new Columns
             {
                 MinColumnWidth = 220,
+                // Contact, roles, and schools differ a lot in length; stretching leaves empty cards
+                EqualHeights = false,
                 Controls =
                 {
                     CardOf(Titled("Candidate", _candidate)),
@@ -425,7 +427,7 @@ namespace GetJobCV.UI
         {
             string? years = skill.RequiredMonths is not { } required ? null
                 : skill.Section is null ? $"{required / 12}+ yrs"
-                : IsShortOnYears(skill) ? $"{skill.ShownMonths / 12.0:0.#}/{required / 12}+ yrs"
+                : IsShortOnYears(skill) ? $"{skill.ShownMonths / 12.0:0.#} of {required / 12}+ yrs"
                 : null;
             string? tag = WhereFound(skill) is { } where
                 ? years is null ? where : $"{where} · {years}"

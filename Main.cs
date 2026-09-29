@@ -23,8 +23,12 @@ namespace GetJobCV
         private readonly AnalyzingView _analyzing = new();
         private readonly ResultsView _results = new();
 
-        // Where to go back to if a run fails
+        // Where to go back to if a run fails or is cancelled
         private Control _inputs;
+
+        // The run in progress, so Cancel can stop it and a new run can wait for it
+        private CancellationTokenSource? _cancel;
+        private Task _running = Task.CompletedTask;
 
         public Main()
         {
@@ -41,6 +45,12 @@ namespace GetJobCV
 
             _start.AnalyzeRequested += (_, _) => RunAnalysis(_start.ResumePath, _start.JobDescription, _start);
             _results.RerunRequested += (_, _) => RunAnalysis(_results.ResumePath, _results.JobDescription, _results);
+            _analyzing.CancelRequested += (_, _) =>
+            {
+                _cancel?.Cancel();
+                ShowView(_inputs);
+                _header.Status.Show(Pill.Kind.Ready, "Analysis cancelled");
+            };
             _header.NewAnalysis.Click += (_, _) =>
             {
                 _start.ResumePath = null;
@@ -115,9 +125,20 @@ namespace GetJobCV
             ShowView(_analyzing);
             _header.Status.Show(Pill.Kind.Working, "Analyzing");
 
-            // Progress<T> posts back to the UI thread so status updates actually paint
+            CancellationTokenSource cancel = new();
+            _cancel = cancel;
+
+            // A cancelled run only stops at its next step, and two runs mustn't share the
+            // NER pipeline, so let the last one finish stopping first
+            if (!_running.IsCompleted)
+                await _running.ContinueWith(_ => { }, TaskScheduler.Default);
+
+            // Progress<T> posts back to the UI thread so status updates actually paint.
+            // A cancelled run's late updates are dropped.
             IProgress<string> status = new Progress<string>(s =>
             {
+                if (cancel.IsCancellationRequested)
+                    return;
                 int step = _analyzing.Report(s);
                 if (step > 0)
                     _header.Status.Show(Pill.Kind.Working, $"Analyzing · step {step} of {AnalyzingView.StageCount}");
@@ -125,9 +146,13 @@ namespace GetJobCV
 
             try
             {
-                AnalysisResult? result = await Task.Run(() =>
-                    Analyze(filePath, jobDescription, ner, _skillTiers, status));
+                Task<AnalysisResult?> run = Task.Run(() =>
+                    Analyze(filePath, jobDescription, ner, _skillTiers, status, cancel.Token), cancel.Token);
+                _running = run;
+                AnalysisResult? result = await run;
 
+                if (cancel.IsCancellationRequested)
+                    return;
                 if (result is null)
                 {
                     Fail($"No text found in {Path.GetFileName(filePath)}. Scanned resumes aren't supported yet");
@@ -139,9 +164,20 @@ namespace GetJobCV
                 ShowView(_results);
                 _header.Status.Show(Pill.Kind.Ready, "Ready");
             }
+            catch (OperationCanceledException) when (cancel.IsCancellationRequested)
+            {
+                // Cancel already went back to the inputs
+            }
             catch (Exception ex)
             {
-                Fail($"Couldn't read {Path.GetFileName(filePath)} ({ex.Message})");
+                if (!cancel.IsCancellationRequested)
+                    Fail($"Couldn't read {Path.GetFileName(filePath)} ({ex.Message})");
+            }
+            finally
+            {
+                if (_cancel == cancel)
+                    _cancel = null;
+                cancel.Dispose();
             }
         }
 
@@ -171,15 +207,24 @@ namespace GetJobCV
         /// Runs the whole pipeline. Runs off the UI thread, so it only touches
         /// the UI through <paramref name="status"/>.
         /// </summary>
+        /// <param name="cancel">Checked between steps; a step already running finishes first</param>
         /// <returns>The result, or null if no text could be extracted</returns>
         private static AnalysisResult? Analyze(
             string filePath,
             string jobDescription,
             NerExtractor ner,
             IReadOnlyDictionary<string, int> skillTiers,
-            IProgress<string> status)
+            IProgress<string> status,
+            CancellationToken cancel)
         {
-            status.Report("Extracting Text");
+            // Every step starts by reporting, so that's where a cancel takes effect
+            void Step(string name)
+            {
+                cancel.ThrowIfCancellationRequested();
+                status.Report(name);
+            }
+
+            Step("Extracting Text");
             using PdfDocument document = PdfDocument.Open(filePath);
             StringBuilder allText = new();
             List<string> hyperlinks = [];
@@ -201,41 +246,48 @@ namespace GetJobCV
                 return null;
 
             // Get socials
-            status.Report("Extracting Socials");
+            Step("Extracting Socials");
             Socials socials = SocialExtractor.Extract(resumeText, hyperlinks);
 
             // Split into Education, Experience, Skills, ...
-            status.Report("Finding Sections");
+            Step("Finding Sections");
             IReadOnlyList<ResumeSection> sections = SectionSegmenter.Segment(resumeText);
 
             // Pull out contact details, schools, and roles
-            status.Report("Parsing Resume");
+            Step("Parsing Resume");
             ResumeRecord record = ResumeParser.Parse(sections, socials);
 
             // Run NER per section so each skill is known with where it appears
-            status.Report("Running Named Entity Recognition");
-            var sectionNer = sections.Select(s => (s.Type, Ner: ner.Extract(s.Text))).ToList();
+            Step("Running Named Entity Recognition");
+            // This is the slow step, so it also checks for a cancel between NER calls
+            NerResult Extract(string text)
+            {
+                cancel.ThrowIfCancellationRequested();
+                return ner.Extract(text);
+            }
+
+            var sectionNer = sections.Select(s => (s.Type, Ner: Extract(s.Text))).ToList();
             NerResult resumeNer = NerResult.Merge(sectionNer.Select(s => s.Ner));
-            NerResult jdNer = ner.Extract(jobDescription);
+            NerResult jdNer = Extract(jobDescription);
 
             // Per-role skills give each skill the months of the jobs that use it
             ExperienceSummary experience = ExperienceCalculator.Summarize(
                 record.Experience
                     .Where(role => role.Section == SectionType.Experience)
-                    .Select(role => (role, (IEnumerable<string>)ner.Extract(role.Text).Skills)),
+                    .Select(role => (role, (IEnumerable<string>)Extract(role.Text).Skills)),
                 DateOnly.FromDateTime(DateTime.Today));
 
             // "3+ years of Python" and "5+ years of experience" in the job description
             JobRequirements requirements = RequirementExtractor.Extract(jobDescription, ner);
 
             // Run preprocessing on text
-            status.Report("Preprocessing Text");
+            Step("Preprocessing Text");
             string[] resumeTokens = PreProcessor.Preprocess(resumeText);
             string[] jdTokens = PreProcessor.Preprocess(jobDescription);
 
             // Vectorize over one shared vocabulary. IDF is off: fitted on only these
             // two docs it would down-weight exactly the shared terms we're scoring on.
-            status.Report("Scoring");
+            Step("Scoring");
             var (_, vectors) = TfidfVectorizer.FitTransform(
                 [resumeTokens, jdTokens], useIdf: false, sublinearTf: true);
 

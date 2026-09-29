@@ -22,13 +22,22 @@ namespace GetJobCV.UI
         private readonly StepList _steps = new([.. Stages.Select(s => s.Label)]) { Dock = DockStyle.Top };
         private readonly Label _file = Theme.TextLabel("", Theme.Body(10.5f), Theme.Muted);
 
+        /// <summary>
+        /// Raised when Cancel is clicked.
+        /// </summary>
+        public event EventHandler? CancelRequested;
+
         public AnalyzingView()
         {
             BackColor = Theme.Background;
             Dock = DockStyle.Fill;
 
-            TableLayoutPanel column = new() { ColumnCount = 1, RowCount = 3, Margin = new Padding(0) };
+            TableLayoutPanel column = new() { ColumnCount = 1, RowCount = 4, Margin = new Padding(0) };
             column.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            column.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            column.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            column.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            column.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             Label title = Theme.TextLabel("Reading your resume", Theme.Display(20f), Theme.Ink);
             title.Margin = new Padding(0, 0, 0, 6);
@@ -42,6 +51,12 @@ namespace GetJobCV.UI
             column.Controls.Add(title, 0, 0);
             column.Controls.Add(_file, 0, 1);
             column.Controls.Add(card, 0, 2);
+
+            Button cancel = Theme.Button("Cancel", Theme.ButtonKind.Secondary);
+            cancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cancel.Margin = new Padding(0, 20, 0, 0);
+            cancel.Click += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
+            column.Controls.Add(cancel, 0, 3);
 
             CenteredColumn center = new() { Dock = DockStyle.Fill, MaxContentWidth = 600, Padding = new Padding(24, 72, 24, 24) };
             center.Controls.Add(column);

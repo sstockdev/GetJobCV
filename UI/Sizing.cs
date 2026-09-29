@@ -143,8 +143,9 @@ namespace GetJobCV.UI
     }
 
     /// <summary>
-    /// Equal-width children side by side, all as tall as the tallest. Stacks them
-    /// instead when a column would be narrower than <see cref="MinColumnWidth"/>.
+    /// Equal-width children side by side, as tall as the tallest unless
+    /// <see cref="EqualHeights"/> is off. Stacks them instead when a column would be
+    /// narrower than <see cref="MinColumnWidth"/>.
     /// </summary>
     internal sealed class Columns : Panel
     {
@@ -153,6 +154,12 @@ namespace GetJobCV.UI
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MinColumnWidth { get; set; }
+
+        /// <summary>
+        /// Stretch every column to the tallest one. Off: each keeps its own height, top-aligned.
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool EqualHeights { get; set; } = true;
 
         public Columns()
         {
@@ -197,7 +204,7 @@ namespace GetJobCV.UI
             int x = 0;
             foreach (Control child in Controls)
             {
-                child.SetBounds(x, 0, column, ClientSize.Height);
+                child.SetBounds(x, 0, column, EqualHeights ? ClientSize.Height : Sizing.HeightFor(child, column));
                 x += column + LogicalToDeviceUnits(Gap);
             }
         }
