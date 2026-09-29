@@ -4,27 +4,74 @@ GetJobCV is a desktop application that attempts to score your resume against a g
 
 ## Usage
 
-GetJobCV is currently Work-In-Progress. Do not expect the program to be functional.
+GetJobCV is currently Work-In-Progress. Do not expect the program to be functional. This project is an experiment to see how effective agentic tooling can be when working on small projects.
 
 ## Roadmap
 
+The roadmap follows the pipelines in the two referenced papers. Each step is tagged with its source:
+**[P]** Pimpalkar et al. (2023), Fig. 3 and Section III steps 1–6; **[C]** Chavan et al. (2024), Figs. 1–2 and Section 6.
+
+### 1. Extract text from files [P step 1]
 - [x] Extract text from PDF
-- [x] Preprocess extracted text (lowercasing, stripping symbols and punctuation, tokenizing, and droping stopwords from NTLK)
+- [x] Extract hyperlinks from PDF annotations
+- [ ] Extract text from DOCX and RTF ("pdf, documents, images, and rich text formats")
+- [ ] OCR for image-only or scanned resumes [P III.A]
+- [ ] Use PDF layout (columns, tables, headers/footers) instead of plain reading order [P IV.4, IV.5, IV.7]
+
+### 2. Preprocessing [P step 2, C Fig. 2]
+- [x] Lowercase, strip symbols and punctuation, tokenize, drop NLTK stopwords
+- [x] Keep tech tokens intact (C++, C#, .NET, Node.js)
+- [ ] Stemming / lemmatization ("Data Prepare → Remove word stemming") [C Fig. 2]
+- [ ] Section segmentation: split the resume into Education, Experience, Skills, Projects, etc. [P IV.6]
+
+### 3. Information extraction: unstructured → structured [P III.A, C Section 6]
+- [x] Named Entity Recognition: people, organizations, locations (WikiNER)
+- [x] Skill gazetteer from O\*NET plus a curated overlay, with demand tiers
 - [x] Extract GitHub and LinkedIn socials
-- [ ] Feature extraction and label encoding
-    - [x] Named Entity Recognition
-        - [x] Pull O\*NET skills instead of hardcoding skills.txt / bundle O\*skills
-    - [x] Count
-    - [x] TF-IDF
-    - [ ] Semantic
-    - [ ] Doc2vec
-    - [x] Combine scoring!
-- [ ] Refactor code
-    - [ ] Add error handling
-    - [ ] Add Stemming / Lemmatization
+- [ ] Structured resume record: name, contact, education (degree, school, dates), job titles, companies, dates [P III.A]
+- [ ] Years of experience, overall and per skill ("Skills and Experience showed significantly improved shortlisting") [C Section 6]
+- [ ] Skill aliases → canonical names (JS → JavaScript, Git → source control)
+- [ ] Parse the GitHub profile via the public API: repo languages and topics as a second skill source [C Fig. 1]
+- [ ] Parse a LinkedIn profile from a user-supplied export (LinkedIn has no public profile API) [C Fig. 1]
+- [ ] Merge CV, GitHub, and LinkedIn skill sets into one candidate skill set with its source for each skill [C Fig. 1]
+
+### 4. Feature extraction and label encoding [P step 3]
+- [x] Count (bag of words)
+- [x] TF-IDF (IDF off for two-document comparison; on once a resume corpus exists)
+- [x] Cosine similarity
+- [ ] Semantic features: word embeddings (GloVe/word2vec) for synonym-aware matching
+- [ ] Doc2vec document vectors
+- [ ] Label encoding of categorical fields (degree level, job category) for the classifiers
+
+### 5. Resume classification [P step 4, C Section 6]
+- [ ] Get a labeled resume dataset (resume text → job category)
+- [ ] KNN job-role classifier on skill set, proficiency, and experience [C Section 6]
+- [ ] Compare against Naïve Bayes, Logistic Regression, SVM, Random Forest, and Decision Tree [P step 4, Table 1]
+- [ ] Classify the job description into the same categories and flag role mismatches
+
+### 6. Ranking and shortlisting [P step 5, C Figs. 1–2]
+- [x] Weighted skill coverage (matched, missing, and extra skills by O\*NET demand tier)
+- [ ] Split the job description into minimum and preferred qualifications
+- [ ] Staged ranking: score minimum credentials, then preferred credentials, then interview criteria, each stage with vectorization and cosine similarity [P step 5]
+- [x] Overall score: weighted blend of cosine match and skill coverage, with a verdict (`ScoreCombiner`)
+- [ ] Combine all stage scores and skill coverage into one final score
+- [ ] Shortlist threshold: "similarities matched → CVs shortlisted / not shortlisted" [C Fig. 2]
+- [ ] Run multiple resumes against one job and rank them [C Fig. 1 "Ranking Algorithm → Short-listed CVs"]
+- [ ] Local candidate store so skill sets and scores are kept between runs [C Fig. 1 "Candidate DB"]
+- [ ] Optional: TextRank-style resume summary (sentences → vectors → similarity matrix → graph → ranked sentences) [P Fig. 4]
+
+### 7. Performance evaluation [P step 6]
+- [ ] Hand-labeled test set of resume/job pairs (fit or no fit, expected skills)
+- [ ] Precision, recall, F1, and accuracy for skill extraction, classification, and shortlisting
+- [ ] Unit tests for each module
+
+### 8. Application
+- [x] Background processing and error handling
 - [ ] Redo UI
-    - [ ] Add the ability to run multiple resumes against a job
-- [ ] Add exporting the report
+- [ ] Export the report
+- [ ] Job-posting scraping as a job-description source ("web scraping") [C Fig. 2]
+
+Out of scope for a local tool: the hosted-ATS features in [C] (interview scheduling, email automation, assessments, cloud deployment).
 
 ## References
 
