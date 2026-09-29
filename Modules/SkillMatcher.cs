@@ -27,13 +27,22 @@ namespace GetJobCV.Modules
         public const double ListedEvidence = 0.5;
 
         /// <summary>
+        /// For a skill with a years requirement, the share of its credit that depends on
+        /// showing those years. The rest is for having the skill at all.
+        /// </summary>
+        public const double YearsShare = 0.5;
+
+        /// <summary>
         /// A skill with it's O*NET demand tier and where the resume shows it
         /// </summary>
         /// <param name="Name">Skill</param>
         /// <param name="Tier">O*NET demand tier: 2 = hot, 1 = in demand, 0 = other</param>
         /// <param name="Section">The strongest resume section the skill appears in;
         /// null for a job description skill the resume doesn't have</param>
-        public sealed record ScoredSkill(string Name, int Tier, SectionType? Section = null)
+        /// <param name="RequiredMonths">Months of experience the job description asks for, if any</param>
+        /// <param name="ShownMonths">Months of roles in the resume that mention the skill</param>
+        public sealed record ScoredSkill(
+            string Name, int Tier, SectionType? Section = null, int? RequiredMonths = null, int ShownMonths = 0)
         {
             /// <summary>
             /// The weight used for coverage: <c>Tier + 1</c>
@@ -44,6 +53,14 @@ namespace GetJobCV.Modules
             /// How strongly the resume backs this skill, from <see cref="Section"/>
             /// </summary>
             public double Evidence => Section is { } s ? EvidenceFor(s) : 0.0;
+
+            /// <summary>
+            /// 1 without a years requirement. With one, <see cref="YearsShare"/> of the
+            /// credit scales with how much of the required time the resume shows.
+            /// </summary>
+            public double YearsFactor => RequiredMonths is > 0 and { } required
+                ? 1 - YearsShare + YearsShare * Math.Min(1.0, (double)ShownMonths / required)
+                : 1.0;
         }
 
         /// <summary>
@@ -75,13 +92,24 @@ namespace GetJobCV.Modules
         /// A skill in several sections counts at its strongest one.</param>
         /// <param name="jobSkills">Skills found in the job description</param>
         /// <param name="tiers">O*NET skill name to demand tier</param>
+        /// <param name="requiredYears">Skill to years the job description asks for (case-insensitive)</param>
+        /// <param name="shownMonths">Skill to months of resume roles that mention it (case-insensitive)</param>
         public static SkillReport Match(
             IEnumerable<(string Skill, SectionType Section)> resumeMentions,
             IEnumerable<string> jobSkills,
-            IReadOnlyDictionary<string, int> tiers)
+            IReadOnlyDictionary<string, int> tiers,
+            IReadOnlyDictionary<string, int>? requiredYears = null,
+            IReadOnlyDictionary<string, int>? shownMonths = null)
         {
             Dictionary<string, SectionType> resume = BestSections(resumeMentions);
             HashSet<string> job = Distinct(jobSkills);
+
+            ScoredSkill Score(string name, SectionType? section) => new(
+                name,
+                tiers.GetValueOrDefault(name),
+                section,
+                requiredYears?.TryGetValue(name, out int years) == true ? years * 12 : null,
+                shownMonths?.GetValueOrDefault(name) ?? 0);
 
             List<ScoredSkill> matched = [];
             List<ScoredSkill> missing = [];
@@ -92,21 +120,21 @@ namespace GetJobCV.Modules
             {
                 if (resume.TryGetValue(name, out SectionType section))
                 {
-                    ScoredSkill skill = Score(name, tiers, section);
+                    ScoredSkill skill = Score(name, section);
                     matched.Add(skill);
-                    coveredWeight += skill.Weight * skill.Evidence;
+                    coveredWeight += skill.Weight * skill.Evidence * skill.YearsFactor;
                     totalWeight += skill.Weight;
                 }
                 else
                 {
-                    ScoredSkill skill = Score(name, tiers);
+                    ScoredSkill skill = Score(name, null);
                     missing.Add(skill);
                     totalWeight += skill.Weight;
                 }
             }
 
             List<ScoredSkill> extra = [.. resume.Where(pair => !job.Contains(pair.Key))
-                .Select(pair => Score(pair.Key, tiers, pair.Value))];
+                .Select(pair => Score(pair.Key, pair.Value))];
 
             double coverage = totalWeight > 0 ? coveredWeight / totalWeight : 0.0;
 
@@ -145,16 +173,6 @@ namespace GetJobCV.Modules
                     best[trimmed] = section;
             }
             return best;
-        }
-
-        /// <summary>
-        /// Helper object that returns score with tier
-        /// </summary>
-        private static ScoredSkill Score(string name, IReadOnlyDictionary<string, int> tiers,
-            SectionType? section = null)
-        {
-            int tier = tiers.TryGetValue(name, out int t) ? t : 0;
-            return new ScoredSkill(name, tier, section);
         }
 
         /// <summary>

@@ -104,7 +104,7 @@ namespace GetJobCV
 
                 DebugTextBox.Text =
                    FormatRecord(result.Record) +
-                   FormatExperience(result.Experience) +
+                   FormatExperience(result.Experience, result.Requirements) +
                    $"Sections: {FormatSections(result.Sections)}\r\n\r\n" +
                    $"People: {string.Join(", ", result.Ner.People)}\r\n" +
                    $"Orgs: {string.Join(", ", result.Ner.Organizations)}\r\n" +
@@ -134,6 +134,7 @@ namespace GetJobCV
             IReadOnlyList<ResumeSection> Sections,
             ResumeRecord Record,
             ExperienceSummary Experience,
+            JobRequirements Requirements,
             NerResult Ner,
             double Score,
             SkillMatcher.SkillReport Skills);
@@ -196,6 +197,9 @@ namespace GetJobCV
                     .Select(role => (role, (IEnumerable<string>)ner.Extract(role.Text).Skills)),
                 DateOnly.FromDateTime(DateTime.Today));
 
+            // "3+ years of Python" and "5+ years of experience" in the job description
+            JobRequirements requirements = RequirementExtractor.Extract(jobDescription, ner);
+
             // Run preprocessing on text
             status.Report("Preprocessing Text");
             string[] resumeTokens = PreProcessor.Preprocess(resumeText);
@@ -216,10 +220,14 @@ namespace GetJobCV
             if (socials.GitHub is not null)
                 resumeSkills.Add(("GitHub", SectionType.Contact));
 
-            SkillMatcher.SkillReport skillReport =
-                SkillMatcher.Match(resumeSkills, jdNer.Skills, skillTiers);
+            Dictionary<string, int> shownMonths = experience.SkillMonths
+                .ToDictionary(s => s.Skill, s => s.Months, StringComparer.OrdinalIgnoreCase);
 
-            return new AnalysisResult(socials, sections, record, experience, resumeNer, score, skillReport);
+            SkillMatcher.SkillReport skillReport = SkillMatcher.Match(
+                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths);
+
+            return new AnalysisResult(
+                socials, sections, record, experience, requirements, resumeNer, score, skillReport);
         }
 
         private static string FormatRecord(ResumeRecord record)
@@ -246,13 +254,23 @@ namespace GetJobCV
             return sb.Append("\r\n").ToString();
         }
 
-        private static string FormatExperience(ExperienceSummary experience)
+        private static string FormatExperience(ExperienceSummary experience, JobRequirements requirements)
         {
             string perSkill = experience.SkillMonths.Count == 0
                 ? "(none)"
                 : string.Join(", ", experience.SkillMonths.Select(s => $"{s.Skill} {s.Months / 12.0:0.#}y"));
-            return $"Professional experience: {experience.TotalYears:0.#} years\r\n" +
-                   $"By skill: {perSkill}\r\n\r\n";
+
+            string overall = requirements.OverallYears is { } years
+                ? $" (job asks for {years}+: {(experience.TotalYears >= years ? "met" : "NOT met")})"
+                : "";
+
+            string required = requirements.SkillYears.Count == 0
+                ? "(none)"
+                : string.Join(", ", requirements.SkillYears.Select(r => $"{r.Key} {r.Value}+y"));
+
+            return $"Professional experience: {experience.TotalYears:0.#} years{overall}\r\n" +
+                   $"By skill: {perSkill}\r\n" +
+                   $"Years required by job: {required}\r\n\r\n";
         }
 
         private static string FormatSections(IReadOnlyList<ResumeSection> sections)
@@ -271,8 +289,16 @@ namespace GetJobCV
                 2 => $"{s.Name} (hot)",
                 1 => $"{s.Name} (in demand)",
                 _ => s.Name
-            } + WhereFound(s)));
+            } + WhereFound(s) + YearsShort(s)));
         }
+
+        /// <summary>
+        /// Marks skills where the resume shows fewer years than the job asks for.
+        /// </summary>
+        private static string YearsShort(SkillMatcher.ScoredSkill skill) =>
+            skill.Section is not null && skill.RequiredMonths is { } required && skill.ShownMonths < required
+                ? $" [shows {skill.ShownMonths / 12.0:0.#} of {required / 12}+ yrs]"
+                : "";
 
         /// <summary>
         /// Marks skills the resume doesn't show being used, since they count for less.
