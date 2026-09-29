@@ -21,10 +21,16 @@ namespace GetJobCV.Modules
         /// </summary>
         private readonly double[] _idf;
 
-        private TfidfVectorizer(CountVectorizer counts, double[] idf)
+        /// <summary>
+        /// Replace raw term counts with <c>1 + ln(tf)</c>.
+        /// </summary>
+        private readonly bool _sublinearTf;
+
+        private TfidfVectorizer(CountVectorizer counts, double[] idf, bool sublinearTf)
         {
             _counts = counts;
             _idf = idf;
+            _sublinearTf = sublinearTf;
         }
 
         /// <summary>
@@ -41,8 +47,12 @@ namespace GetJobCV.Modules
         /// This learns a vocab and a smoothed IDF weight per term from a corpus.
         /// </summary>
         /// <param name="documents">The preprocessed token lists (one per doc)</param>
+        /// <param name="useIdf">Weigh terms by IDF. With a tiny corpus (e.g. just a resume and a
+        /// job description) IDF down-weights the shared terms, so turn it off there.</param>
+        /// <param name="sublinearTf">Use <c>1 + ln(tf)</c> instead of raw counts.</param>
         /// <returns>A fitted vectorizer.</returns>
-        public static TfidfVectorizer Fit(IEnumerable<string[]> documents)
+        public static TfidfVectorizer Fit(IEnumerable<string[]> documents,
+            bool useIdf = true, bool sublinearTf = false)
         {
             // Grab from CountVectorizer
             var (counts, countMatrix) = CountVectorizer.FitTransform(documents);
@@ -59,9 +69,9 @@ namespace GetJobCV.Modules
             int n = countMatrix.Length;
             double[] idf = new double[vocabSize];
             for (int i = 0; i < vocabSize; i++)
-                idf[i] = Math.Log((1.0 + n) / (1.0 + documentFrequency[i])) + 1.0;
+                idf[i] = useIdf ? Math.Log((1.0 + n) / (1.0 + documentFrequency[i])) + 1.0 : 1.0;
 
-            return new TfidfVectorizer(counts, idf);
+            return new TfidfVectorizer(counts, idf, sublinearTf);
         }
 
         /// <summary>
@@ -78,7 +88,8 @@ namespace GetJobCV.Modules
 
             for (int i = 0; i < rawCounts.Length; i++)
             {
-                double weight = rawCounts[i] * _idf[i];
+                double tf = _sublinearTf && rawCounts[i] > 0 ? 1.0 + Math.Log(rawCounts[i]) : rawCounts[i];
+                double weight = tf * _idf[i];
                 weights[i] = weight;
                 sumOfSquares += weight * weight;
             }
@@ -98,12 +109,14 @@ namespace GetJobCV.Modules
         /// per doc in the same order.
         /// </summary>
         /// <param name="documents">Prepreocessed token lists (one per doc).</param>
+        /// <param name="useIdf">See <see cref="Fit"/>.</param>
+        /// <param name="sublinearTf">See <see cref="Fit"/>.</param>
         /// <returns>The fitted vectorizer and one TF-IDF vector per input document.</returns>
         public static (TfidfVectorizer Vectorizer, double[][] Vectors)
-            FitTransform(IEnumerable<string[]> documents)
+            FitTransform(IEnumerable<string[]> documents, bool useIdf = true, bool sublinearTf = false)
         {
             string[][] corpus = [.. documents];
-            TfidfVectorizer vectorizer = Fit(corpus);
+            TfidfVectorizer vectorizer = Fit(corpus, useIdf, sublinearTf);
             double[][] vectors = [.. corpus.Select(vectorizer.Transform)];
             return (vectorizer, vectors);
         }

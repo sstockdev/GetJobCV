@@ -6,7 +6,7 @@
 #   Essential Skills.txt  sha256=cb387171afbc976b40790aa79946d0ba7eeb667d7fbd5d7610b3e4da288506d4
 #   Transferable Skills.txt  sha256=c38338e9130b3374af597ececbb73f639088263e60f0bedde18a5b5e64f85f2c
 # Format: <skill><TAB><category><TAB><weight>  (weight: 2=hot, 1=in-demand, 0=other)
-# Total: 8784 skills
+# Total: 8783 skills
 Active Learning	Competency	0
 Active Listening	Competency	0
 Complex Problem Solving	Competency	0
@@ -32,7 +32,6 @@ Programming	Competency	0
 Quality Control Analysis	Competency	0
 Reading Comprehension	Competency	0
 Repairing	Competency	0
-Science	Competency	0
 Service Orientation	Competency	0
 Social Perceptiveness	Competency	0
 Speaking	Competency	0

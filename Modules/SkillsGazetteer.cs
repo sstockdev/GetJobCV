@@ -25,9 +25,25 @@ namespace GetJobCV.Modules
             foreach (SkillEntry e in LoadCategorized(path))
                 if (seen.Add(e.Name)) names.Add(e.Name);
             foreach (string n in LoadOverlay(overlayPath))
-                if (seen.Add(n)) names.Add(n);
+                if (!n.StartsWith(CaseSensitivePrefix) && seen.Add(n)) names.Add(n);
             return names;
         }
+
+        /// <summary>
+        /// Overlay lines starting with this are matched case-sensitively, for skills
+        /// that collide with ordinary words or letters (CAN vs "can", C vs "c").
+        /// </summary>
+        public const char CaseSensitivePrefix = '=';
+
+        /// <summary>
+        /// Overlay skills that must match case-sensitively, prefix stripped.
+        /// </summary>
+        public static IReadOnlyList<string> LoadCaseSensitive(string overlayPath = OverlayPath) =>
+            [.. LoadOverlay(overlayPath)
+                .Where(n => n.StartsWith(CaseSensitivePrefix))
+                .Select(n => n[1..].Trim())
+                .Where(n => n.Length > 0)
+                .Distinct(StringComparer.Ordinal)];
 
         /// <summary>
         /// Converts O*NET skill to demand tier

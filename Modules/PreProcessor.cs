@@ -40,7 +40,7 @@ namespace GetJobCV.Modules
             "further", "furthermore", "get", "gets", "getting", "given", "gives", "go", "goes",
             "going", "gone", "got", "gotten", "greetings", "had", "hadn't", "half", "happens",
             "hardly", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "hello",
-            "help", "hence", "her", "here", "hereafter", "hereby", "herein", "here's", "hereupon",
+            "hence", "her", "here", "hereafter", "hereby", "herein", "here's", "hereupon",
             "hers", "herself", "he's", "hi", "him", "himself", "his", "hither", "hopefully", "how",
             "howbeit", "however", "hundred", "i'd", "ie", "if", "ignored", "i'll", "i'm", "immediate",
             "in", "inasmuch", "inc", "inc.", "indeed", "indicate", "indicated", "indicates", "inner",
@@ -73,25 +73,25 @@ namespace GetJobCV.Modules
             "throughout", "thru", "thus", "till", "to", "together", "too", "took", "toward", "towards", "tried", "tries",
             "truly", "try", "trying", "t's", "twice", "two", "un", "under", "underneath", "undoing", "unfortunately",
             "unless", "unlike", "unlikely", "until", "unto", "up", "upon", "upwards", "us", "use", "used", "useful", "uses",
-            "using", "usually", "v", "value", "various", "versus", "very", "via", "viz", "vs", "want", "wants", "was",
+            "using", "usually", "v", "various", "versus", "very", "via", "viz", "vs", "want", "wants", "was",
             "wasn't", "way", "we", "we'd", "welcome", "well", "we'll", "went", "were", "we're", "weren't", "we've", "what",
             "whatever", "what'll", "what's", "what've", "when", "whence", "whenever", "where", "whereafter", "whereas",
             "whereby", "wherein", "where's", "whereupon", "wherever", "whether", "which", "whichever", "while", "whilst",
             "whither", "who", "who'd", "whoever", "whole", "who'll", "whom", "whomever", "who's", "whose", "why", "will",
             "willing", "wish", "with", "within", "without", "wonder", "won't", "would", "wouldn't", "yes", "yet", "you",
             "you'd", "you'll", "your", "you're", "yours", "yourself", "yourselves", "you've", "zero", "a", "how's", "i",
-            "when's", "why's", "b", "c", "d", "e", "f", "g", "h", "j", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
-            "uucp", "w", "x", "y", "z", "I", "www", "amount", "bill", "bottom", "call", "computer", "con", "couldnt", "cry",
+            "when's", "why's", "b", "d", "e", "f", "g", "h", "j", "l", "m", "n", "o", "p", "q", "s", "t", "u",
+            "uucp", "w", "x", "y", "z", "I", "www", "amount", "bill", "bottom", "call", "con", "couldnt", "cry",
             "de", "describe", "detail", "due", "eleven", "empty", "fifteen", "fifty", "fill", "find", "fire", "forty", "front",
             "full", "give", "hasnt", "herse", "himse", "interest", "itse”", "mill", "move", "myse”", "part", "put", "show",
-            "side", "sincere", "sixty", "system", "ten", "thick", "thin", "top", "twelve", "twenty", "abst", "accordance", "act",
+            "side", "sincere", "sixty", "ten", "thick", "thin", "top", "twelve", "twenty", "abst", "accordance", "act",
             "added", "adopted", "affected", "affecting", "affects", "ah", "announce", "anymore", "apparently", "approximately", "aren",
             "arent", "arise", "auth", "beginning", "beginnings", "begins", "biol", "briefly", "ca", "date", "ed", "effect", "et-al",
-            "ff", "fix", "gave", "giving", "heres", "hes", "hid", "home", "id", "im", "immediately", "importance", "important", "index",
-            "information", "invention", "itd", "keys", "kg", "km", "largely", "lets", "line", "'ll", "means", "mg", "million", "ml",
+            "ff", "gave", "giving", "heres", "hes", "hid", "home", "id", "im", "immediately", "importance",
+            "invention", "itd", "kg", "km", "largely", "lets", "line", "'ll", "means", "mg", "million", "ml",
             "mug", "na", "nay", "necessarily", "nos", "noted", "obtain", "obtained", "omitted", "ord", "owing", "page", "pages", "poorly",
             "possibly", "potentially", "pp", "predominantly", "present", "previously", "primarily", "promptly", "proud", "quickly", "ran",
-            "readily", "ref", "refs", "related", "research", "resulted", "resulting", "results", "run", "sec", "section", "shed", "shes",
+            "readily", "ref", "refs", "related", "resulted", "resulting", "results", "sec", "section", "shed", "shes",
             "showed", "shown", "showns", "shows", "significant", "significantly", "similar", "similarly", "slightly", "somethan", "specifically",
             "state", "states", "stop", "strongly", "substantially", "successfully", "sufficiently", "suggest", "thered", "thereof", "therere",
             "thereto", "theyd", "theyre", "thou", "thoughh", "thousand", "throug", "til", "tip", "ts", "ups", "usefully", "usefulness", "'ve",
@@ -115,6 +115,11 @@ namespace GetJobCV.Modules
         private static readonly Regex MultiSpace = MultiSpaceRegex();
 
         /// <summary>
+        /// Regex to remove straight and curly apostrophes
+        /// </summary>
+        private static readonly Regex Apostrophe = ApostropheRegex();
+
+        /// <summary>
         /// Preprocess text extracted from a PDF.
         /// Lowercase, strip symbols and punctuation, tokenize, and drop stopwords
         /// </summary>
@@ -126,11 +131,17 @@ namespace GetJobCV.Modules
                 return [];
 
             string text = raw.ToLowerInvariant();
+            // Drop apostrophes so "don't" -> "dont", matching the normalized stopwords
+            text = Apostrophe.Replace(text, "");
             text = NonAlphaNum.Replace(text, " ");
             text = MultiSpace.Replace(text, " ");
 
+            // '+', '#' and '.' are kept above so c++, c#, .net and node.js survive;
+            // trailing sentence dots are trimmed and symbol-only tokens dropped here
             return [.. text
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => t.TrimEnd('.'))
+                .Where(t => t.Any(char.IsLetterOrDigit))
                 .Where(t => !Stopwords.Contains(t))];
         }
 
@@ -148,7 +159,10 @@ namespace GetJobCV.Modules
         [GeneratedRegex(@"\s+", RegexOptions.Compiled)]
         private static partial Regex MultiSpaceRegex();
 
-        [GeneratedRegex(@"[^a-z0-9\s]", RegexOptions.Compiled)]
+        [GeneratedRegex(@"[^\p{L}\p{N}\s+#.]", RegexOptions.Compiled)]
         private static partial Regex NonAlphaNumRegex();
+
+        [GeneratedRegex(@"['’]", RegexOptions.Compiled)]
+        private static partial Regex ApostropheRegex();
     }
 }

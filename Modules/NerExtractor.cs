@@ -1,5 +1,6 @@
 ﻿using Catalyst;
 using Catalyst.Models;
+using System.Text.RegularExpressions;
 using Mosaik.Core;
 using Version = Mosaik.Core.Version;
 
@@ -11,7 +12,7 @@ namespace GetJobCV.Modules
     /// model. Skills come from a gazetteer Spotter.
     /// Needs un-preprocessed input.
     /// </summary>
-    public sealed class NerExtractor
+    public sealed partial class NerExtractor
     {
         private readonly Pipeline _pipeline;
 
@@ -21,8 +22,11 @@ namespace GetJobCV.Modules
         /// Builds once. Downloads English + WikiNER models on first run
         /// then register the skills gazetteer.
         /// </summary>
-        /// <param name="skills">skills gazetteer</param>
-        public static async Task<NerExtractor> CreateAsync(IEnumerable<string> skills)
+        /// <param name="skills">skills gazetteer, matched case-insensitively</param>
+        /// <param name="caseSensitiveSkills">skills that collide with ordinary words
+        /// (CAN vs "can"), so only match with exact case</param>
+        public static async Task<NerExtractor> CreateAsync(
+            IEnumerable<string> skills, IEnumerable<string>? caseSensitiveSkills = null)
         {
             English.Register();
 
@@ -32,12 +36,19 @@ namespace GetJobCV.Modules
             pipeline.Add(await AveragePerceptronEntityRecognizer.FromStoreAsync(
                 language: Language.English, version: Version.Latest, tag: "WikiNER"));
 
-            // Gazetteer: tokens matching a skill phrase get entity type "Skill"
+            // Gazetteer: tokens matching a skill phrase get entity type "Skill".
+            // Entries get the same slash padding as the text, so "ci/cd" still matches.
             Spotter skillSpotter = new(Language.Any, 0, "skills", "Skill");
             skillSpotter.Data.IgnoreCase = true;
             foreach (string skill in skills)
-                skillSpotter.AddEntry(skill);
+                skillSpotter.AddEntry(PadSlashes(skill));
             pipeline.Add(skillSpotter);
+
+            Spotter exactSpotter = new(Language.Any, 0, "skills-exact", "Skill");
+            exactSpotter.Data.IgnoreCase = false;
+            foreach (string skill in caseSensitiveSkills ?? [])
+                exactSpotter.AddEntry(PadSlashes(skill));
+            pipeline.Add(exactSpotter);
 
             return new NerExtractor(pipeline);
         }
@@ -53,7 +64,7 @@ namespace GetJobCV.Modules
             if (string.IsNullOrWhiteSpace(rawText))
                 return NerResult.Empty;
 
-            Document doc = new(rawText, Language.English);
+            Document doc = new(PadSlashes(rawText), Language.English);
             _pipeline.ProcessSingle(doc);
 
             HashSet<string> people = new(StringComparer.OrdinalIgnoreCase);
@@ -69,7 +80,8 @@ namespace GetJobCV.Modules
                     case "Person": people.Add(e.Value); break;
                     case "Organization": orgs.Add(e.Value); break;
                     case "Location": locations.Add(e.Value); break;
-                    case "Skill": skills.Add(e.Value); break;
+                    // Undo the slash padding so "CI / CD" reads as "CI/CD"
+                    case "Skill": skills.Add(e.Value.Replace(" / ", "/")); break;
                 }
             }
 
@@ -80,6 +92,18 @@ namespace GetJobCV.Modules
 
             return new NerResult([.. people], [.. orgs], [.. locations], [.. skills]);
         }
+
+        /// <summary>
+        /// Catalyst's tokenizer doesn't split on '/', so "C/C++" or "C#/.NET" would
+        /// be one token and the skill spotter would never see C++ or C#.
+        /// URLs are left alone so "https://..." doesn't turn into an "https" skill.
+        /// </summary>
+        private static string PadSlashes(string text) =>
+            SlashOrUrlRegex().Replace(text, m => m.Groups["url"].Success ? m.Value : " / ");
+
+        [GeneratedRegex(@"(?<url>\b(?:https?://|www\.)\S+|\b[\w-]+\.(?:com|org|net|io|dev|edu|gov)/\S*)|(?<=\S)/(?=\S)",
+            RegexOptions.IgnoreCase)]
+        private static partial Regex SlashOrUrlRegex();
 
         /// <summary>
         /// Entities pulled from a resume. De-duped.

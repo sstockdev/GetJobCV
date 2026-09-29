@@ -19,7 +19,7 @@ var sources = new List<Source>
     new("Transferable Skills.txt", "Element Name", "Competency", null, null)
 };
 
-if (excludeTools) sources.RemoveAll(s => s.Category == "Tool");
+if (excludeTools) sources.RemoveAll(s => s.Category == "Technology");
 
 var block = LoadBlocklist(blockPath);
 Console.WriteLine($"blocklist: {block.Count} terms (from {blockPath})");

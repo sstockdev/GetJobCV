@@ -3,22 +3,27 @@
 # These are the short forms, abbreviations, and tech names that the bundled O*NET
 # base (Resources/onet_skills.tsv) does NOT contain. Merged with it in
 # SkillsGazetteer.Load(). Optional "alias<TAB>canonical" lines are also supported.
+# Lines starting with '=' match case-sensitively, for skills that collide with
+# ordinary words or letters (=CAN vs "can", =C vs "c").
 
 # --- Programming languages ---
 java
-go
 golang
-rust
+rust lang
+rustlang
 matlab
 objective-c
-dart
+dart lang
+dartlang
 elixir
 erlang
 clojure
 f#
 groovy
 cobol
-assembly
+assembly language
+x86 assembly
+arm assembly
 vba
 powershell
 shell scripting
@@ -419,3 +424,57 @@ netbox
 rocky linux
 nuget
 parallel programming
+
+# --- Embedded, hardware, and vehicle networking ---
+=C
+=CAN
+can bus
+canbus
+j1939
+canopen
+lin bus
+modbus
+embedded c
+embedded linux
+firmware
+firmware development
+microcontroller
+microcontrollers
+real-time systems
+real-time embedded systems
+real-time operating systems
+rtos
+freertos
+zephyr
+bare metal
+arm cortex
+stm32
+esp32
+fpga
+vhdl
+verilog
+pcb design
+i2c
+uart
+usb
+ethernet
+wi-fi
+wifi
+bluetooth
+bluetooth low energy
+gnss
+gps
+telematics
+sensor integration
+hardware integration
+oscilloscope
+logic analyzer
+jtag
+diagnostics
+
+# --- Debugging, validation, and source control ---
+debugging
+software testing
+software validation
+source control
+version control
