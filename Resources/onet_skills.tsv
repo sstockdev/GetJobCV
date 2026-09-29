@@ -6,7 +6,7 @@
 #   Essential Skills.txt  sha256=cb387171afbc976b40790aa79946d0ba7eeb667d7fbd5d7610b3e4da288506d4
 #   Transferable Skills.txt  sha256=c38338e9130b3374af597ececbb73f639088263e60f0bedde18a5b5e64f85f2c
 # Format: <skill><TAB><category><TAB><weight>  (weight: 2=hot, 1=in-demand, 0=other)
-# Total: 8783 skills
+# Total: 8780 skills
 Active Learning	Competency	0
 Active Listening	Competency	0
 Complex Problem Solving	Competency	0
@@ -497,7 +497,6 @@ Analysis and Visualization of Time Sequences AVTS	Technology	0
 Analysis of Smoke Control Systems ASCOS	Technology	0
 Analytical Graphics STK Expert Edition	Technology	0
 Analytical software	Technology	0
-Analyze	Technology	0
 AnalyzerXL	Technology	0
 Anand Systems ASI FrontDesk	Technology	0
 Anasazi Software Assessment and Treatment Plan Systems	Technology	0
@@ -3199,7 +3198,6 @@ Freight Rail Crew Optimization Scheduling FRCOS software	Technology	0
 Freight reservation software	Technology	0
 Freight+	Technology	0
 FreightDATA	Technology	0
-Front Desk	Technology	0
 FRSGlobal RegPro	Technology	0
 FRx Software Microsoft Forecaster	Technology	0
 FRx Software Microsoft FRx	Technology	0
@@ -6699,7 +6697,6 @@ Resources Calculations Incorporated SoftCost	Technology	0
 Respondus	Technology	0
 RESRAD	Technology	0
 REST Assured	Technology	1
-Restaurant Manager	Technology	0
 Restaurant Operations & Management Spreadsheet Library	Technology	0
 RestaurantPlus PRO	Technology	0
 RESTful API	Technology	1

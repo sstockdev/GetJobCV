@@ -16,3 +16,6 @@ design
 project
 management
 science
+analyze
+front desk
+restaurant manager

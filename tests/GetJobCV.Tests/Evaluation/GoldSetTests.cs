@@ -103,8 +103,8 @@ namespace GetJobCV.Tests
     public class GoldSetTests(GoldSetFixture gold, ITestOutputHelper output) : IClassFixture<GoldSetFixture>
     {
         // Floors sit just under the measured values, so only a real regression fails
-        private const double JobSkillF1Floor = 0.80;
-        private const double ResumeSkillF1Floor = 0.77;
+        private const double JobSkillF1Floor = 0.95;
+        private const double ResumeSkillF1Floor = 0.93;
         private const double ConcordanceFloor = 0.95;
         private const double GoodVsNoAucFloor = 0.95;
 

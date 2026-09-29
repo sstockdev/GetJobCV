@@ -37,6 +37,14 @@ namespace GetJobCV.Tests
             Assert.DoesNotContain("C", skills, StringComparer.Ordinal);
         }
 
+        [Theory]
+        [InlineData("Experience with Azure Service Bus", "Azure Service Bus")]
+        [InlineData("Registered Nurse, Minnesota\r\nBLS, ACLS", "BLS")]
+        public void Finds_skills_WikiNER_takes_for_names(string text, string skill)
+        {
+            Assert.Contains(skill, _ner.Extract(text).Skills, StringComparer.OrdinalIgnoreCase);
+        }
+
         [Fact]
         public void Reads_years_requirements_from_a_job_description()
         {

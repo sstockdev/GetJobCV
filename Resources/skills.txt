@@ -463,6 +463,47 @@ software validation
 source control
 version control
 
+# --- Healthcare and clinical ---
+patient care
+patient education
+patient assessment
+medication administration
+iv therapy
+vital signs
+phlebotomy
+wound care
+infection control
+cardiac monitoring
+medical terminology
+insurance verification
+medical billing
+medical coding
+=ICD-10
+electronic health records
+Cerner
+MEDITECH
+HIPAA
+BLS
+ACLS
+=PALS
+CPR
+EKG
+=CMA
+
+# --- Gaps found by the evaluation set ---
+WCAG
+ASP.NET MVC
+Azure App Service
+Azure Kubernetes Service
+Azure Service Bus
+message queue
+React Testing Library
+logistic regression
+linear regression
+random forest
+decision tree
+gradient boosting
+
 # --- Canonical names for aliases below ---
 =Go
 =Spark
@@ -611,6 +652,33 @@ object oriented programming	Object-Oriented Programming
 Salesforce software	Salesforce
 Salesforce.com Salesforce CRM	Salesforce
 
+# Healthcare abbreviations and verb forms
+=Epic	Epic Systems
+=EHR	electronic health records
+=EMR	electronic health records
+electronic medical records	electronic health records
+electronic health record	electronic health records
+electronic medical record	electronic health records
+ECG	EKG
+EKGs	EKG
+ECGs	EKG
+venipuncture	phlebotomy
+administer medications	medication administration
+administered medications	medication administration
+administering medications	medication administration
+educate patients	patient education
+educated patients	patient education
+educating patients	patient education
+
+# Other gaps found by the evaluation set
+=Excel	Microsoft Excel
+=AKS	Azure Kubernetes Service
+unit test	unit testing
+unit tests	unit testing
+a/b test	a/b testing
+a/b tests	a/b testing
+accessibility	web accessibility
+
 # Verb forms of concept skills ("communicate effectively" asks for Communication).
 # Plurals and hyphenated forms of multi-word skills ("code reviews") are generated.
 communicate	communication
@@ -739,3 +807,28 @@ pytest > unit testing
 Selenium > test automation
 Scrum > Agile
 Kanban > Agile
+
+# Healthcare
+Epic Systems > electronic health records
+Cerner > electronic health records
+MEDITECH > electronic health records
+ACLS > BLS
+PALS > BLS
+
+# Evaluation set gaps
+WCAG > web accessibility
+ASP.NET MVC > ASP.NET
+Azure App Service > Azure
+Azure Kubernetes Service > Azure
+Azure Kubernetes Service > Kubernetes
+Azure Service Bus > Azure
+Azure Service Bus > message queue
+RabbitMQ > message queue
+Kafka > message queue
+React Testing Library > unit testing
+logistic regression > Machine Learning
+linear regression > Machine Learning
+random forest > Machine Learning
+decision tree > Machine Learning
+gradient boosting > Machine Learning
+XGBoost > gradient boosting

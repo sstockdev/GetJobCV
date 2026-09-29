@@ -14,7 +14,17 @@ namespace GetJobCV.Modules
     /// </summary>
     public sealed partial class NerExtractor
     {
-        private readonly Pipeline _pipeline;
+        /// <summary>
+        /// WikiNER for people, organizations and locations.
+        /// </summary>
+        private readonly Pipeline _namePipeline;
+
+        /// <summary>
+        /// The skill spotters, on their own document: WikiNER overwrites the entity of any
+        /// token it tags, so sharing one would lose skills it takes for names ("Minnesota
+        /// BLS", "Azure Service Bus").
+        /// </summary>
+        private readonly Pipeline _skillPipeline;
 
         /// <summary>
         /// Every gazetteer entry, used to decide which slashed tokens hold skills.
@@ -27,10 +37,11 @@ namespace GetJobCV.Modules
         /// </summary>
         private readonly IReadOnlyDictionary<string, string> _aliases;
 
-        private NerExtractor(Pipeline pipeline, HashSet<string> skills, HashSet<string> exactSkills,
+        private NerExtractor(Pipeline namePipeline, Pipeline skillPipeline, HashSet<string> skills, HashSet<string> exactSkills,
             IReadOnlyDictionary<string, string> aliases)
         {
-            _pipeline = pipeline;
+            _namePipeline = namePipeline;
+            _skillPipeline = skillPipeline;
             _skills = skills;
             _exactSkills = exactSkills;
             _aliases = aliases;
@@ -50,20 +61,19 @@ namespace GetJobCV.Modules
         {
             English.Register();
 
-            Pipeline pipeline = await Pipeline.ForAsync(Language.English);
-
-            // load WikiNER
-            pipeline.Add(await AveragePerceptronEntityRecognizer.FromStoreAsync(
+            Pipeline namePipeline = await Pipeline.ForAsync(Language.English);
+            namePipeline.Add(await AveragePerceptronEntityRecognizer.FromStoreAsync(
                 language: Language.English, version: Version.Latest, tag: "WikiNER"));
 
             HashSet<string> skillSet = new(skills, StringComparer.OrdinalIgnoreCase);
             HashSet<string> exactSet = new(caseSensitiveSkills, StringComparer.Ordinal);
 
             // Gazetteer: tokens matching a skill phrase get entity type "Skill"
-            pipeline.Add(CreateSpotter("skills", ignoreCase: true, skillSet));
-            pipeline.Add(CreateSpotter("skills-exact", ignoreCase: false, exactSet));
+            Pipeline skillPipeline = Pipeline.TokenizerFor(Language.English);
+            skillPipeline.Add(CreateSpotter("skills", ignoreCase: true, skillSet));
+            skillPipeline.Add(CreateSpotter("skills-exact", ignoreCase: false, exactSet));
 
-            return new NerExtractor(pipeline, skillSet, exactSet,
+            return new NerExtractor(namePipeline, skillPipeline, skillSet, exactSet,
                 new Dictionary<string, string>(aliases ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase));
         }
 
@@ -87,8 +97,11 @@ namespace GetJobCV.Modules
             if (string.IsNullOrWhiteSpace(rawText))
                 return NerResult.Empty;
 
-            Document doc = new(DetachTrailingPunctuation(SplitSlashedSkills(rawText)), Language.English);
-            _pipeline.ProcessSingle(doc);
+            string text = DetachTrailingPunctuation(SplitSlashedSkills(rawText));
+            Document names = new(text, Language.English);
+            Document skillDoc = new(text, Language.English);
+            _namePipeline.ProcessSingle(names);
+            _skillPipeline.ProcessSingle(skillDoc);
 
             HashSet<string> people = new(StringComparer.OrdinalIgnoreCase);
             HashSet<string> orgs = new(StringComparer.OrdinalIgnoreCase);
@@ -97,7 +110,7 @@ namespace GetJobCV.Modules
             HashSet<string> written = new(StringComparer.OrdinalIgnoreCase);
             List<SkillMention> mentions = [];
 
-            foreach (var e in doc.SelectMany(span => span.GetEntities()))
+            foreach (var e in names.Concat(skillDoc).SelectMany(span => span.GetEntities()))
             {
                 // from WikiNER
                 switch (e.EntityType.Type)
