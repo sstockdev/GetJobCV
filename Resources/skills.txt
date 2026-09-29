@@ -504,6 +504,56 @@ random forest
 decision tree
 gradient boosting
 
+# --- Accounting and finance ---
+accounting
+bookkeeping
+general ledger
+journal entries
+account reconciliation
+bank reconciliation
+month-end close
+year-end close
+accounts payable
+accounts receivable
+accruals
+depreciation
+fixed assets
+financial reporting
+financial statements
+variance analysis
+forecasting
+payroll
+sales tax
+billing
+attention to detail
+=GAAP
+=IFRS
+=CPA
+pivot tables
+VLOOKUP
+QuickBooks
+NetSuite
+
+# --- IT administration ---
+Active Directory
+Group Policy
+Microsoft 365
+VMware vSphere
+Veeam
+Nagios
+PagerDuty
+VLAN
+CompTIA Security+
+networking
+AWS Certified Solutions Architect
+
+# --- Apple and Android mobile ---
+XCTest
+Fastlane
+HealthKit
+Espresso
+Firebase
+
 # --- Canonical names for aliases below ---
 =Go
 =Spark
@@ -679,6 +729,25 @@ a/b test	a/b testing
 a/b tests	a/b testing
 accessibility	web accessibility
 
+# Vendor-prefixed O*NET product names and other spellings
+Intuit QuickBooks	QuickBooks
+QuickBooks Online	QuickBooks
+Oracle NetSuite	NetSuite
+NetSuite ERP	NetSuite
+Microsoft Active Directory	Active Directory
+Office 365	Microsoft 365
+=M365	Microsoft 365
+=O365	Microsoft 365
+vSphere	VMware vSphere
+VLANs	VLAN
+Security+	CompTIA Security+
+month end close	month-end close
+year end close	year-end close
+journal entry	journal entries
+detail oriented	attention to detail
+detail-oriented	attention to detail
+containerized	containerization
+
 # Verb forms of concept skills ("communicate effectively" asks for Communication).
 # Plurals and hyphenated forms of multi-word skills ("code reviews") are generated.
 communicate	communication
@@ -832,3 +901,14 @@ random forest > Machine Learning
 decision tree > Machine Learning
 gradient boosting > Machine Learning
 XGBoost > gradient boosting
+
+# Accounting, IT administration, and mobile
+QuickBooks > bookkeeping
+bank reconciliation > account reconciliation
+VMware vSphere > VMware
+Nagios > Monitoring
+PagerDuty > incident response
+AWS Certified Solutions Architect > AWS
+XCTest > unit testing
+Fastlane > CI/CD
+Espresso > test automation
