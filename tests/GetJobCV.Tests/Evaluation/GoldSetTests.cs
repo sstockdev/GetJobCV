@@ -86,7 +86,7 @@ namespace GetJobCV.Tests
         {
             Analyzer.AnalysisResult result = Analyzer.Analyze(
                 resumeText, [], jobText, ner, Tiers.Value, Parents.Value, Today);
-            ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(result.Score, result.Skills.WeightCoverage);
+            ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(result.Score, result.Skills);
             return (new Pair(job, resume, fit, result.Score, result.Skills.WeightCoverage, combined.Overall, combined.Verdict), result);
         }
 
@@ -111,8 +111,8 @@ namespace GetJobCV.Tests
     public class GoldSetTests(GoldSetFixture gold, ITestOutputHelper output) : IClassFixture<GoldSetFixture>
     {
         // Floors sit just under the measured values, so only a real regression fails
-        private const double JobSkillF1Floor = 0.80;
-        private const double ResumeSkillF1Floor = 0.79;
+        private const double JobSkillF1Floor = 0.83;
+        private const double ResumeSkillF1Floor = 0.82;
         private const double ConcordanceFloor = 0.95;
         private const double GoodVsNoAucFloor = 0.95;
         private const double VerdictAgreementFloor = 0.80;
@@ -149,7 +149,10 @@ namespace GetJobCV.Tests
         public void Fit_ranking()
         {
             var (concordance, auc, ndcg) = Rank(p => p.Overall);
+            // A held-back verdict isn't right, so holding back can't raise agreement, but it isn't
+            // a wrong call either
             int verdictsRight = gold.Pairs.Count(p => VerdictFit(p.Verdict) == p.Fit);
+            int heldBack = gold.Pairs.Count(p => VerdictFit(p.Verdict) is null);
 
             output.WriteLine($"{"Job",-18} {"Resume",-18} {"Label",-10} {"Cosine",7} {"Coverage",9} {"Overall",8}  Verdict");
             foreach (var p in gold.Pairs.OrderBy(p => p.Job).ThenByDescending(p => p.Overall))
@@ -160,7 +163,7 @@ namespace GetJobCV.Tests
             output.WriteLine($"Within-job concordance: {concordance:P1} (cosine alone {Rank(p => p.Cosine).Concordance:P1}, coverage alone {Rank(p => p.Coverage).Concordance:P1})");
             output.WriteLine($"Good vs No AUC: {auc:P1}");
             output.WriteLine($"Mean NDCG per job: {ndcg:P1}");
-            output.WriteLine($"Verdict matches label: {verdictsRight}/{gold.Pairs.Count}");
+            output.WriteLine($"Verdict matches label: {verdictsRight}/{gold.Pairs.Count} ({gold.Pairs.Count - verdictsRight - heldBack} wrong, {heldBack} held back)");
 
             Assert.True(concordance >= ConcordanceFloor, $"Concordance {concordance:P1} fell below {ConcordanceFloor:P1}");
             Assert.True(auc >= GoodVsNoAucFloor, $"Good vs No AUC {auc:P1} fell below {GoodVsNoAucFloor:P1}");
@@ -172,10 +175,12 @@ namespace GetJobCV.Tests
             EvalMetrics.Rank(gold.Pairs.Select(p => (p.Job, p.Fit, score(p))));
 
         /// <summary>
-        /// The label a verdict claims. "Needs improvement!" and "Awful" both say no fit.
+        /// The label a verdict claims. "Needs improvement!" and "Awful" both say no fit; a
+        /// held-back verdict claims none.
         /// </summary>
-        private static Fit VerdictFit(string verdict) =>
-            verdict == ScoreCombiner.Verdict(1) ? Fit.Good
+        private static Fit? VerdictFit(string verdict) =>
+            verdict == ScoreCombiner.TooFewSkillsVerdict ? null
+            : verdict == ScoreCombiner.Verdict(1) ? Fit.Good
             : verdict == ScoreCombiner.Verdict(0.5) ? Fit.Potential
             : Fit.No;
 

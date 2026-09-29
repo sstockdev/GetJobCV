@@ -18,7 +18,7 @@ namespace GetJobCV.Tests
             [new ResumeSection(SectionType.Experience, "Work History", ""), new ResumeSection(SectionType.Skills, "Skills", "")],
             new SkillReport(
                 [new ScoredSkill("C#", 2, SectionType.Experience, 36, 40), new ScoredSkill("Python", 2, SectionType.Skills, null, 0, true)],
-                [new ScoredSkill("Kubernetes", 2)],
+                [new ScoredSkill("Kubernetes", 2), new ScoredSkill("Docker", 2), new ScoredSkill("Terraform", 1)],
                 [new ScoredSkill("React", 1, SectionType.Projects)],
                 new YearsCheck(60, 40),
                 0.7),

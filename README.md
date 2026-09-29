@@ -27,7 +27,7 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 
 ### 3. Information extraction: unstructured → structured [P III.A, C Section 6]
 - [x] Named Entity Recognition: people, organizations, locations (WikiNER)
-- [x] Skill gazetteer from O\*NET plus a curated overlay, with demand tiers
+- [x] Skill gazetteer from O\*NET plus a curated overlay, with demand tiers and the short names people write for O\*NET's "... software" entries ("PLC", "HubSpot")
 - [x] Extract GitHub and LinkedIn socials
 - [x] Structured resume record: name, contact, education (degree, school, dates), job titles, companies, dates [P III.A]
 - [x] Years of experience, overall and per skill ("Skills and Experience showed significantly improved shortlisting") [C Section 6]
@@ -58,7 +58,7 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 - [x] Split the job description into minimum and preferred qualifications: nice-to-have skills ("a plus", "Preferred Qualifications") count half (`QualificationSplitter`)
 - [x] Alternatives: a list where any one skill counts ("one of the following", "such as", "Python or Java", an inline topic list) is one requirement (`AlternativeGroups`)
 - [ ] Staged ranking: score minimum credentials, then preferred credentials, then interview criteria, each stage with vectorization and cosine similarity [P step 5]
-- [x] Overall score: weighted blend of cosine match and skill coverage, with a verdict (`ScoreCombiner`)
+- [x] Overall score: weighted blend of cosine match and skill coverage, with a verdict that's held back when the job has too few recognized skills (`ScoreCombiner`)
 - [ ] Combine all stage scores and skill coverage into one final score
 - [ ] Shortlist threshold: "similarities matched → CVs shortlisted / not shortlisted" [C Fig. 2]
 - [ ] Run multiple resumes against one job and rank them [C Fig. 1 "Ranking Algorithm → Short-listed CVs"]

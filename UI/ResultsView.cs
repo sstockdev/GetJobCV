@@ -111,7 +111,7 @@ namespace GetJobCV.UI
             _jobDescription.Box.Text = jobDescription;
             ResumePath = resumePath;
 
-            ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(cosine, skills.WeightCoverage);
+            ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(cosine, skills);
             _ring.Value = combined.Overall;
             _verdict.Text = combined.Verdict;
             _advice.Text = ReportText.Advice(skills);

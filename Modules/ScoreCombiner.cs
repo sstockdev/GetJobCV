@@ -30,10 +30,33 @@ namespace GetJobCV.Modules
         private const double BadThreshold = 0.10;
 
         /// <summary>
+        /// With fewer job description skills recognized than this, coverage says little: an
+        /// overall years requirement outweighs them, so a resume with the years and none of
+        /// the skills covers most of the job. The verdict then says so instead of judging.
+        /// </summary>
+        public const int MinJobSkills = 5;
+
+        /// <summary>
+        /// The verdict when the job description has fewer than <see cref="MinJobSkills"/>
+        /// recognized skills.
+        /// </summary>
+        public const string TooFewSkillsVerdict = "Too few job skills recognized to judge.";
+
+        /// <summary>
         /// The combined result
         /// </summary>
         public sealed record CombinedScore(double Overall, string Verdict);
-        
+
+        /// <summary>
+        /// Combines a match's cosine and skill report, holding back the verdict when the job
+        /// description has too few recognized skills.
+        /// </summary>
+        public static CombinedScore Combine(double cosine, SkillMatcher.SkillReport skills)
+        {
+            CombinedScore combined = Combine(cosine, skills.WeightCoverage);
+            return skills.JobSkillCount < MinJobSkills ? combined with { Verdict = TooFewSkillsVerdict } : combined;
+        }
+
         /// <summary>
         /// Method to combine the two scores.
         /// </summary>

@@ -27,7 +27,7 @@ namespace GetJobCV.UI
     {
         public static string Build(ReportInput input)
         {
-            ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(input.Cosine, input.Skills.WeightCoverage);
+            ScoreCombiner.CombinedScore combined = ScoreCombiner.Combine(input.Cosine, input.Skills);
             string date = input.GeneratedAt.ToString("MMMM d, yyyy 'at' h:mm tt", CultureInfo.InvariantCulture);
             StringBuilder html = new();
 

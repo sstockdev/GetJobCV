@@ -113,7 +113,14 @@ namespace GetJobCV.Modules
             IReadOnlyList<ScoredSkill> Missing,
             IReadOnlyList<ScoredSkill> Extra,
             YearsCheck? OverallYears,
-            double WeightCoverage);
+            double WeightCoverage)
+        {
+            /// <summary>
+            /// How many job description skills were recognized: matched plus missing. A group
+            /// of alternatives with a match counts only its matched members.
+            /// </summary>
+            public int JobSkillCount => Matched.Count + Missing.Count;
+        }
 
         /// <summary>
         /// How strongly a skill found in this section shows the candidate has it.
