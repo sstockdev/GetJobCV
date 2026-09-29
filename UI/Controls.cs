@@ -276,6 +276,12 @@ namespace GetJobCV.UI
             Size = GetPreferredSize(Size.Empty);
         }
 
+        /// <summary>
+        /// Draw as a nice-to-have skill: dashed border, no fill.
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool Dashed { get; set; }
+
         private int Marker => _tier > 0 ? LogicalToDeviceUnits(8) + LogicalToDeviceUnits(6) : 0;
 
         public override Size GetPreferredSize(Size proposedSize)
@@ -295,9 +301,12 @@ namespace GetJobCV.UI
 
             using (GraphicsPath path = Theme.RoundRect(new RectangleF(0.5f, 0.5f, Width - 1.5f, Height - 1.5f), LogicalToDeviceUnits(6)))
             {
-                using SolidBrush fill = new(_style.Fill);
+                // Nice to have: no fill and a dashed ink border, so it reads apart from color alone
+                using SolidBrush fill = new(Dashed ? Theme.Surface : _style.Fill);
                 g.FillPath(fill, path);
-                using Pen border = new(_style.Border);
+                using Pen border = Dashed
+                    ? new(_style.Ink, 1.25f) { DashStyle = DashStyle.Dash }
+                    : new(_style.Border);
                 g.DrawPath(border, path);
             }
 

@@ -39,6 +39,12 @@ namespace GetJobCV.Modules
         public const int OverallYearsWeight = 3;
 
         /// <summary>
+        /// A skill the job description only lists as nice to have counts this share of a
+        /// required skill's weight, so missing it costs less.
+        /// </summary>
+        public const double PreferredWeight = 0.5;
+
+        /// <summary>
         /// An overall years-of-experience requirement and what the resume shows.
         /// </summary>
         public sealed record YearsCheck(int RequiredMonths, int ShownMonths)
@@ -58,13 +64,21 @@ namespace GetJobCV.Modules
         /// null for a job description skill the resume doesn't have</param>
         /// <param name="RequiredMonths">Months of experience the job description asks for, if any</param>
         /// <param name="ShownMonths">Months of roles in the resume that mention the skill</param>
+        /// <param name="Preferred">The job description only lists it as nice to have</param>
         public sealed record ScoredSkill(
-            string Name, int Tier, SectionType? Section = null, int? RequiredMonths = null, int ShownMonths = 0)
+            string Name, int Tier, SectionType? Section = null, int? RequiredMonths = null, int ShownMonths = 0,
+            bool Preferred = false)
         {
             /// <summary>
-            /// The weight used for coverage: <c>Tier + 1</c>
+            /// Demand weight: <c>Tier + 1</c>
             /// </summary>
             public int Weight => Tier + 1;
+
+            /// <summary>
+            /// The weight used for coverage: <see cref="Weight"/>, scaled by
+            /// <see cref="PreferredWeight"/> for a nice-to-have skill
+            /// </summary>
+            public double CoverageWeight => Preferred ? Weight * PreferredWeight : Weight;
 
             /// <summary>
             /// How strongly the resume backs this skill, from <see cref="Section"/>
@@ -114,43 +128,47 @@ namespace GetJobCV.Modules
         /// <param name="requiredYears">Skill to years the job description asks for (case-insensitive)</param>
         /// <param name="shownMonths">Skill to months of resume roles that mention it (case-insensitive)</param>
         /// <param name="overallYears">The job's overall years-of-experience requirement, if any</param>
+        /// <param name="preferred">Job skills that are only nice to have (case-insensitive)</param>
         public static SkillReport Match(
             IEnumerable<(string Skill, SectionType Section)> resumeMentions,
             IEnumerable<string> jobSkills,
             IReadOnlyDictionary<string, int> tiers,
             IReadOnlyDictionary<string, int>? requiredYears = null,
             IReadOnlyDictionary<string, int>? shownMonths = null,
-            YearsCheck? overallYears = null)
+            YearsCheck? overallYears = null,
+            IReadOnlySet<string>? preferred = null)
         {
             Dictionary<string, SectionType> resume = BestSections(resumeMentions);
             HashSet<string> job = Distinct(jobSkills);
+            HashSet<string> niceToHave = new(preferred ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
 
-            ScoredSkill Score(string name, SectionType? section) => new(
+            ScoredSkill Score(string name, SectionType? section, bool isJobSkill) => new(
                 name,
                 tiers.GetValueOrDefault(name),
                 section,
                 requiredYears?.TryGetValue(name, out int years) == true ? years * 12 : null,
-                shownMonths?.GetValueOrDefault(name) ?? 0);
+                shownMonths?.GetValueOrDefault(name) ?? 0,
+                isJobSkill && niceToHave.Contains(name));
 
             List<ScoredSkill> matched = [];
             List<ScoredSkill> missing = [];
             double coveredWeight = 0;
-            int totalWeight = 0;
+            double totalWeight = 0;
 
             foreach (string name in job)
             {
                 if (resume.TryGetValue(name, out SectionType section))
                 {
-                    ScoredSkill skill = Score(name, section);
+                    ScoredSkill skill = Score(name, section, true);
                     matched.Add(skill);
-                    coveredWeight += skill.Weight * skill.Evidence * skill.YearsFactor;
-                    totalWeight += skill.Weight;
+                    coveredWeight += skill.CoverageWeight * skill.Evidence * skill.YearsFactor;
+                    totalWeight += skill.CoverageWeight;
                 }
                 else
                 {
-                    ScoredSkill skill = Score(name, null);
+                    ScoredSkill skill = Score(name, null, true);
                     missing.Add(skill);
-                    totalWeight += skill.Weight;
+                    totalWeight += skill.CoverageWeight;
                 }
             }
 
@@ -161,7 +179,7 @@ namespace GetJobCV.Modules
             }
 
             List<ScoredSkill> extra = [.. resume.Where(pair => !job.Contains(pair.Key))
-                .Select(pair => Score(pair.Key, pair.Value))];
+                .Select(pair => Score(pair.Key, pair.Value, false))];
 
             double coverage = totalWeight > 0 ? coveredWeight / totalWeight : 0.0;
 
@@ -203,10 +221,10 @@ namespace GetJobCV.Modules
         }
 
         /// <summary>
-        /// Helper method to sort skills.
+        /// Helper method to sort skills: required before nice to have, then by demand.
         /// </summary>
         private static List<ScoredSkill> Sort(List<ScoredSkill> skills) =>
-            [.. skills.OrderByDescending(s => s.Weight).ThenBy(s => s.Name,
+            [.. skills.OrderBy(s => s.Preferred).ThenByDescending(s => s.Weight).ThenBy(s => s.Name,
                 StringComparer.OrdinalIgnoreCase)];
     }
 }

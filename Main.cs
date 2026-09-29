@@ -255,8 +255,11 @@ namespace GetJobCV
                 ? new SkillMatcher.YearsCheck(years * 12, experience.TotalMonths)
                 : null;
 
+            // "Python is a plus", "Preferred qualifications": these count for less
+            IReadOnlySet<string> preferred = QualificationSplitter.PreferredSkills(jobDescription, ner);
+
             SkillMatcher.SkillReport skillReport = SkillMatcher.Match(
-                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths, overallYears);
+                resumeSkills, jdNer.Skills, skillTiers, requirements.SkillYears, shownMonths, overallYears, preferred);
 
             return new AnalysisResult(
                 socials, sections, record, experience, requirements, resumeNer, score, skillReport);

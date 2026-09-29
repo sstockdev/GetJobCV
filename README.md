@@ -54,7 +54,7 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 - [x] Weighted skill coverage (matched, missing, and extra skills by O\*NET demand tier)
 - [x] Years-of-experience requirements from the job description ("3+ years of Python", "5+ years of experience"); matched skills lose credit when the resume shows fewer years
 - [x] Use the overall years requirement in the score: counts as one more requirement in skill coverage (weighted like a hot skill), credited by years shown / years required
-- [ ] Split the job description into minimum and preferred qualifications
+- [x] Split the job description into minimum and preferred qualifications: nice-to-have skills ("a plus", "Preferred Qualifications") count half (`QualificationSplitter`)
 - [ ] Staged ranking: score minimum credentials, then preferred credentials, then interview criteria, each stage with vectorization and cosine similarity [P step 5]
 - [x] Overall score: weighted blend of cosine match and skill coverage, with a verdict (`ScoreCombiner`)
 - [ ] Combine all stage scores and skill coverage into one final score

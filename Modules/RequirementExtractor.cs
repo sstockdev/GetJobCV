@@ -53,7 +53,7 @@ namespace GetJobCV.Modules
         {
             List<YearsRequirement> all = [];
 
-            foreach (string clause in ClauseRegex().Split(jobDescription))
+            foreach (string clause in SplitClauses(jobDescription))
             {
                 List<Match> mentions = YearsRegex().Matches(clause).ToList();
                 if (mentions.Count == 0)
@@ -98,7 +98,7 @@ namespace GetJobCV.Modules
         /// Where <paramref name="skill"/> appears as a whole word, so "C" isn't found
         /// inside "Backend" or "C#". -1 if it doesn't.
         /// </summary>
-        private static int WholeWordIndex(string clause, string skill)
+        internal static int WholeWordIndex(string clause, string skill)
         {
             Match m = Regex.Match(clause,
                 @"(?<![\p{L}\p{N}])" + Regex.Escape(skill) + @"(?![\p{L}\p{N}#+])",
@@ -120,6 +120,11 @@ namespace GetJobCV.Modules
         /// </summary>
         [GeneratedRegex(@"\r?\n|[;•]|(?<=[.!?])\s+(?=[A-Z0-9])")]
         private static partial Regex ClauseRegex();
+
+        /// <summary>
+        /// Lines, bullets, and sentences of <paramref name="text"/>.
+        /// </summary>
+        internal static string[] SplitClauses(string text) => ClauseRegex().Split(text);
 
         /// <summary>
         /// "3+ years", "3-5 yrs", "at least five years", "minimum of 2 years", "(4+ years)".

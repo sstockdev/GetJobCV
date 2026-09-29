@@ -46,5 +46,16 @@ namespace GetJobCV.Tests
             Assert.Equal(3, r.SkillYears["C#"]);
             Assert.False(r.SkillYears.ContainsKey("C"));
         }
+
+        [Fact]
+        public void Reads_nice_to_have_skills_from_a_job_description()
+        {
+            IReadOnlySet<string> preferred = QualificationSplitter.PreferredSkills(
+                "Backend engineer. 5+ years of experience. 3+ years of C#. " +
+                "Experience with SQL, Docker, Kubernetes, and Git. Python is a plus.",
+                _ner);
+
+            Assert.Equal(["Python"], preferred);
+        }
     }
 }

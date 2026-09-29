@@ -166,9 +166,13 @@ namespace GetJobCV.UI
                 return "No known skills were recognized in the job description, so the score is text similarity only.";
 
             List<string> notes = [];
-            int missing = skills.Missing.Count;
+            int missing = skills.Missing.Count(s => !s.Preferred);
             if (missing > 0)
-                notes.Add($"{missing} skill{(missing == 1 ? "" : "s")} the job asks for {(missing == 1 ? "wasn't" : "weren't")} found in your resume.");
+                notes.Add($"{missing} skill{(missing == 1 ? "" : "s")} the job requires {(missing == 1 ? "wasn't" : "weren't")} found in your resume.");
+
+            int missingNice = skills.Missing.Count(s => s.Preferred);
+            if (missingNice > 0)
+                notes.Add($"{missingNice} nice-to-have skill{(missingNice == 1 ? " is" : "s are")} missing{(missing > 0 ? " too" : "")}.");
 
             int weak = skills.Matched.Count(s => s.Evidence < SkillMatcher.UsedEvidence);
             if (weak > 0)
@@ -303,7 +307,7 @@ namespace GetJobCV.UI
         {
             Label title = Theme.TextLabel("Skills", Theme.Display(14f), Theme.Ink);
             title.AutoSize = false;
-            Label legend = Theme.TextLabel("■ Hot    □ In demand    Tagged skills are only listed or mentioned and count for less",
+            Label legend = Theme.TextLabel("■ Hot    □ In demand    Dashed = nice to have    Tagged = only listed or mentioned",
                 Theme.Body(8.25f), Theme.Muted);
             legend.AutoSize = false;
             legend.Tag = Row.Fill;
@@ -416,7 +420,7 @@ namespace GetJobCV.UI
                 ? years is null ? where : $"{where} · {years}"
                 : years;
 
-            SkillChip chip = new(skill.Name, skill.Tier, tag, style);
+            SkillChip chip = new(skill.Name, skill.Tier, tag, style) { Dashed = skill.Preferred };
             string demand = skill.Tier switch { 2 => "Hot skill", 1 => "In-demand skill", _ => "Skill" };
             string evidence = skill.Section switch
             {
@@ -430,7 +434,8 @@ namespace GetJobCV.UI
                 ? $" · job asks for {months / 12}+ years" +
                   (skill.Section is null ? "" : $", resume shows {skill.ShownMonths / 12.0:0.#}")
                 : "";
-            _tips.SetToolTip(chip, $"{demand} · {evidence}{wanted}");
+            string niceToHave = skill.Preferred ? $" · nice to have, counts {SkillMatcher.PreferredWeight:P0} of a required skill" : "";
+            _tips.SetToolTip(chip, $"{demand} · {evidence}{wanted}{niceToHave}");
             return chip;
         }
 
