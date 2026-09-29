@@ -176,9 +176,10 @@ namespace GetJobCV
             status.Report("Finding Sections");
             IReadOnlyList<ResumeSection> sections = SectionSegmenter.Segment(resumeText);
 
-            // Run NER on text
+            // Run NER per section so each skill is known with where it appears
             status.Report("Running Named Entity Recognition");
-            NerResult resumeNer = ner.Extract(resumeText);
+            var sectionNer = sections.Select(s => (s.Type, Ner: ner.Extract(s.Text))).ToList();
+            NerResult resumeNer = NerResult.Merge(sectionNer.Select(s => s.Ner));
             NerResult jdNer = ner.Extract(jobDescription);
 
             // Run preprocessing on text
@@ -194,10 +195,12 @@ namespace GetJobCV
 
             double score = Similarity.Cosine(vectors[0], vectors[1]);
 
+            List<(string Skill, SectionType Section)> resumeSkills =
+                [.. sectionNer.SelectMany(s => s.Ner.Skills.Select(skill => (skill, s.Type)))];
+
             // A GitHub profile link is evidence of GitHub even though NER can't see into URLs
-            List<string> resumeSkills = [.. resumeNer.Skills];
             if (socials.GitHub is not null)
-                resumeSkills.Add("GitHub");
+                resumeSkills.Add(("GitHub", SectionType.Contact));
 
             SkillMatcher.SkillReport skillReport =
                 SkillMatcher.Match(resumeSkills, jdNer.Skills, skillTiers);
@@ -221,7 +224,18 @@ namespace GetJobCV
                 2 => $"{s.Name} (hot)",
                 1 => $"{s.Name} (in demand)",
                 _ => s.Name
-            }));
+            } + WhereFound(s)));
         }
+
+        /// <summary>
+        /// Marks skills the resume doesn't show being used, since they count for less.
+        /// </summary>
+        private static string WhereFound(SkillMatcher.ScoredSkill skill) => skill.Section switch
+        {
+            null => "",
+            SectionType.Skills => " [skills list only]",
+            SectionType s when skill.Evidence < SkillMatcher.UsedEvidence => $" [{s}]",
+            _ => ""
+        };
     }
 }

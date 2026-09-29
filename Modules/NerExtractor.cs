@@ -139,6 +139,33 @@ namespace GetJobCV.Modules
             IReadOnlyList<string> Skills)
         {
             public static readonly NerResult Empty = new([], [], [], []);
+
+            /// <summary>
+            /// Combine results from separate chunks of one document (e.g. resume sections).
+            /// A name tagged as a skill anywhere is dropped from people / orgs / locations,
+            /// same as <see cref="Extract"/> does within one chunk.
+            /// </summary>
+            public static NerResult Merge(IEnumerable<NerResult> results)
+            {
+                HashSet<string> people = new(StringComparer.OrdinalIgnoreCase);
+                HashSet<string> orgs = new(StringComparer.OrdinalIgnoreCase);
+                HashSet<string> locations = new(StringComparer.OrdinalIgnoreCase);
+                HashSet<string> skills = new(StringComparer.OrdinalIgnoreCase);
+
+                foreach (NerResult r in results)
+                {
+                    people.UnionWith(r.People);
+                    orgs.UnionWith(r.Organizations);
+                    locations.UnionWith(r.Locations);
+                    skills.UnionWith(r.Skills);
+                }
+
+                people.ExceptWith(skills);
+                orgs.ExceptWith(skills);
+                locations.ExceptWith(skills);
+
+                return new NerResult([.. people], [.. orgs], [.. locations], [.. skills]);
+            }
         }
     }
 }

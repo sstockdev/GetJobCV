@@ -23,7 +23,7 @@ The roadmap follows the pipelines in the two referenced papers. Each step is tag
 - [x] Keep tech tokens intact (C++, C#, .NET, Node.js)
 - [ ] Stemming / lemmatization ("Data Prepare → Remove word stemming") [C Fig. 2]
 - [x] Section segmentation: split the resume into Education, Experience, Skills, Projects, etc. [P IV.6]
-- [ ] Use sections in scoring (e.g. weight a skill used in Experience above one only listed under Skills)
+- [x] Use sections in scoring: a matched skill counts fully when used (Experience, Projects, ...), 0.75 when mentioned (Education, Summary, ...), 0.5 when only in the Skills list
 
 ### 3. Information extraction: unstructured → structured [P III.A, C Section 6]
 - [x] Named Entity Recognition: people, organizations, locations (WikiNER)
