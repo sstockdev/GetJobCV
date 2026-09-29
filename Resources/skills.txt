@@ -631,6 +631,7 @@ NestJS > Node.js
 Spring > Java
 Spring Boot > Spring
 ASP.NET > .NET
+Blazor > ASP.NET
 Django > Python
 Flask > Python
 FastAPI > Python
@@ -678,11 +679,23 @@ Kubernetes > containerization
 Jenkins > CI/CD
 GitHub Actions > CI/CD
 GitLab CI > CI/CD
+CircleCI > CI/CD
+Travis CI > CI/CD
+TeamCity > CI/CD
+Argo CD > CI/CD
 Terraform > infrastructure as code
 CloudFormation > infrastructure as code
 Ansible > infrastructure as code
 Ubuntu > Linux
 Red Hat Enterprise Linux > Linux
+Prometheus > Monitoring
+Grafana > Monitoring
+Datadog > Monitoring
+New Relic > Monitoring
+Splunk > Monitoring
+Kibana > Monitoring
+ELK Stack > Monitoring
+observability > Monitoring
 
 # Data and ML
 Deep Learning > Machine Learning

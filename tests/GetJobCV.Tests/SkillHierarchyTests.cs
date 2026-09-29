@@ -15,6 +15,7 @@ namespace GetJobCV.Tests
         [InlineData("GitHub", "Git")]
         [InlineData("TypeScript", "JavaScript")]
         [InlineData("Scrum", "Agile")]
+        [InlineData("Datadog", "Monitoring")]
         public void Maps_a_skill_to_the_general_skill_it_implies(string specific, string general)
         {
             Assert.Contains(general, SkillsGazetteer.LoadParents()[specific]);
@@ -25,6 +26,7 @@ namespace GetJobCV.Tests
         [InlineData("Spring Boot", "Java")]
         [InlineData("GitHub", "version control")]
         [InlineData("PyTorch", "Machine Learning")]
+        [InlineData("Blazor", ".NET")]
         public void Follows_chains(string specific, string general)
         {
             Assert.Contains(general, SkillsGazetteer.LoadParents()[specific]);
